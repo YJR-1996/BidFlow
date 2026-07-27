@@ -1,5 +1,49 @@
-# 负责人：成员 B
-#
-# 你要做什么：约定前端创建和展示投标项目时传什么、收什么。
-# 实现步骤：1）创建模型校验名称、招标单位、截止日期；2）更新模型允许部分字段更新；3）列表模型返回项目卡片需要的状态、风险数、完成度；4）详情模型返回完整项目数据。
-# 完成后验证：Swagger 输入空项目名会报错；前端拿列表结果可直接显示卡片。
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional
+from datetime import datetime
+
+
+class ProjectCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200, description="项目名称")
+    tenderer: Optional[str] = Field(None, max_length=200, description="招标单位")
+    deadline: Optional[datetime] = Field(None, description="截止日期")
+    budget: Optional[int] = Field(None, description="预算金额")
+    description: Optional[str] = Field(None, description="项目描述")
+
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=200, description="项目名称")
+    tenderer: Optional[str] = Field(None, max_length=200, description="招标单位")
+    deadline: Optional[datetime] = Field(None, description="截止日期")
+    budget: Optional[int] = Field(None, description="预算金额")
+    description: Optional[str] = Field(None, description="项目描述")
+    status: Optional[str] = Field(None, description="项目状态")
+
+
+class ProjectListItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    tenderer: Optional[str]
+    deadline: Optional[datetime]
+    status: str
+    created_at: datetime
+    requirement_count: int = 0
+    risk_count: int = 0
+    completion_rate: float = 0.0
+
+
+class ProjectDetail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    owner_id: int
+    name: str
+    tenderer: Optional[str]
+    deadline: Optional[datetime]
+    budget: Optional[int]
+    description: Optional[str]
+    status: str
+    created_at: datetime
+    updated_at: datetime

@@ -1,5 +1,18 @@
-# 负责人：成员 C
-#
-# 你要做什么：实现企业资料的上传、查看和删除接口。
-# 实现顺序：1）从 deps.py 取得当前用户；2）校验文件类型和资料类型；3）调用 file_storage 保存；4）调用 company_material_service 处理；5）返回状态；6）删除时校验 owner_id 并同步清理文件、表记录、向量。
-# 完成后验证：上传后可在列表看到状态；删除后调用检索接口不再返回该文件片段。
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from typing import List
+
+from app.db.session import get_db
+from app.models.user import User
+from app.schemas.common import ApiResponse
+from app.api.deps import get_current_user
+
+router = APIRouter()
+
+
+@router.get("", response_model=ApiResponse[list])
+def list_company_documents(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return ApiResponse(data=[])

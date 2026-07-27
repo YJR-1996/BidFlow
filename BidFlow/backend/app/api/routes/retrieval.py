@@ -1,5 +1,8 @@
-# 负责人：成员 C
-#
-# 你要做什么：提供一个给前端和全组调试的企业资料检索接口。
-# 实现顺序：1）读取 query、top_k 和可选 project_id；2）从 deps.py 获取当前用户；3）校验项目归属；4）调用 retrieval_service；5）返回每条的片段、分数、文件名、类型、位置。
-# 完成后验证：上传“公司案例”资料后搜索“案例”能返回该文件；其他用户不能搜索到该资料。
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.schemas.common import ApiResponse
+from app.api.deps import get_current_user
+
+router = APIRouter()

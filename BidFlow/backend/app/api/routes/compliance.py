@@ -1,5 +1,8 @@
-# 负责人：成员 D
-#
-# 你要做什么：提供运行合规核查、查看报告和导出 Markdown 的接口。
-# 实现顺序：1）校验项目归属；2）触发 compliance_checker；3）返回问题数量；4）查询最新风险与完成度；5）调用 report_service 生成 Markdown 下载内容。
-# 完成后验证：空 P0 项会显示高风险；点击导出得到可读 Markdown；其他用户不能导出该项目报告。
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.schemas.common import ApiResponse
+from app.api.deps import get_current_user
+
+router = APIRouter()

@@ -1,5 +1,29 @@
-# 负责人：成员 B
-#
-# 你要做什么：把招标书中的每一个“必须响应的要求”保存成独立记录。
-# 实现步骤：1）关联项目和招标文件；2）保存资格、商务、技术、评分等类别；3）保存需求内容和原文来源；4）保存 P0/P1/P2、状态、负责人；5）关联草稿和风险项。
-# 完成后验证：点击任意需求项能看到原文片段；编辑后内容、状态和负责人都能保存。
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
+
+from app.db.session import Base
+
+
+class Requirement(Base):
+    __tablename__ = "requirements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("bid_projects.id"), nullable=False)
+    tender_document_id = Column(Integer, ForeignKey("tender_documents.id"))
+    category = Column(String(50), default="other")
+    content = Column(Text, nullable=False)
+    source_text = Column(Text)
+    source_ref = Column(String(200))
+    priority = Column(String(10), default="P2")
+    status = Column(String(20), default="未处理")
+    assignee_id = Column(Integer, ForeignKey("users.id"))
+    risk_level = Column(String(10), default="低")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project = relationship("BidProject", back_populates="requirements")
+    tender_document = relationship("TenderDocument", back_populates="requirements")
+    responses = relationship("Response", back_populates="requirement", cascade="all, delete-orphan")
+    compliance_issues = relationship("ComplianceIssue", back_populates="requirement", cascade="all, delete-orphan")

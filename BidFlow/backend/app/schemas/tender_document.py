@@ -1,5 +1,24 @@
-# 负责人：成员 B
-#
-# 你要做什么：统一招标文件上传、列表和状态查询的返回字段。
-# 实现步骤：1）定义文件 ID、名称、类型、状态、失败原因、上传时间；2）限制状态为四种固定值；3）让上传接口和状态查询复用同一响应模型。
-# 完成后验证：前端不需要猜字段名，就能显示“处理中”或失败原因。
+from pydantic import BaseModel, ConfigDict
+from typing import Optional
+from datetime import datetime
+
+
+class TenderDocumentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    project_id: int
+    filename: str
+    file_type: Optional[str]
+    file_size: Optional[int]
+    status: str
+    error_message: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+class ParseResultResponse(BaseModel):
+    document_id: int
+    status: str
+    requirement_count: int = 0
+    error_message: Optional[str] = None

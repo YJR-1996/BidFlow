@@ -1,7 +1,20 @@
+from datetime import datetime
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
+from app.core.exceptions import register_exception_handlers
+from app.db.session import init_db
+from app.api.router import api_router
+from app.schemas.common import ApiResponse
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    description="BidFlow：AI 招投标文件智能编制与合规核查平台",
+    version="1.0.0",
+)
 
 from app.api.router import router as api_router
 from app.core.config import settings

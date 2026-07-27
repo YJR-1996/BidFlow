@@ -1,5 +1,24 @@
-# 负责人：成员 B
-#
-# 你要做什么：记录每份招标文件从上传到解析完成的全过程。
-# 实现步骤：1）关联 project_id；2）保存原始文件名、真实存储路径、类型和上传时间；3）保存 pending、processing、success、failed 状态；4）失败时保存 error_message；5）关联由此文件提取的需求项。
-# 完成后验证：上传后能看到 pending；解析成功变 success；故意上传损坏文件时能显示 failed 和原因。
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
+
+from app.db.session import Base
+
+
+class TenderDocument(Base):
+    __tablename__ = "tender_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("bid_projects.id"), nullable=False)
+    filename = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    file_type = Column(String(20))
+    file_size = Column(Integer)
+    status = Column(String(20), default="pending")
+    error_message = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project = relationship("BidProject", back_populates="tender_documents")
+    requirements = relationship("Requirement", back_populates="tender_document", cascade="all, delete-orphan")
