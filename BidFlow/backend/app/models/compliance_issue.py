@@ -1,5 +1,16 @@
-# 负责人：成员 D
-#
-# 你要做什么：保存规则引擎发现的每一条风险，供报告和前端展示。
-# 实现步骤：1）关联 project_id 和可选 requirement_id；2）保存 rule_code；3）保存 high、medium、low 等级；4）保存说明、建议和处理状态；5）记录创建和更新时间。
-# 完成后验证：报告中的每条风险都能跳回具体需求和对应规则。
+"""成员 D 的合规问题领域模型；后续由 A 接入 SQLAlchemy 表。"""
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+
+
+@dataclass
+class StoredComplianceIssue:
+    project_id: int
+    requirement_id: int | None
+    rule_code: str
+    level: str
+    description: str
+    suggestion: str
+    status: str = "open"
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

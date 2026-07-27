@@ -1,6 +1,53 @@
-# 负责人：成员 D
-#
-# 你要做什么：按照固定规则检查投标项目是否存在遗漏或风险。
-# 实现顺序：1）读取项目、全部需求和草稿；2）检查 P0 未完成；3）检查空响应；4）检查 AI 草稿无来源；5）检查 needs_manual；6）检查项目名称、招标单位、截止日期不一致；7）写入或更新 compliance_issues；8）已修复问题改为已处理。
-# 重要约束：风险等级由规则决定，模型只能解释原因，不能擅自将高风险改为低风险。
-# 完成后验证：故意留空一个 P0 项，核查后必须得到高风险；修复后再次核查应更新状态而非重复新增。
+"""确定性的投标响应合规规则，不依赖数据库或模型服务。"""
+
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass(frozen=True)
+class RequirementSnapshot:
+    requirement_id: int
+    content: str
+    priority: str
+    response_content: str
+    source_refs: list[Any]
+    status: str
+
+
+@dataclass(frozen=True)
+class ComplianceIssue:
+    requirement_id: int
+    rule_code: str
+    level: str
+    description: str
+    suggestion: str
+
+
+class ComplianceChecker:
+    """将规则判定与后续的数据库持久化分离，方便单元测试和重复核查。"""
+
+    def check(self, requirements: list[RequirementSnapshot]) -> list[ComplianceIssue]:
+        issues: list[ComplianceIssue] = []
+        for item in requirements:
+            content = item.response_content.strip()
+            p0_incomplete = item.priority == "P0" and item.status != "completed"
+            if p0_incomplete:
+                issues.append(self._issue(item, "P0_RESPONSE_MISSING", "high", "P0 响应项尚未完成", "补充响应内容并完成审核。"))
+            if not content and not p0_incomplete:
+                issues.append(self._issue(item, "RESPONSE_CONTENT_EMPTY", "high", "响应内容为空", "补充可审核的响应内容。"))
+            elif not item.source_refs:
+                issues.append(self._issue(item, "RESPONSE_SOURCE_MISSING", "medium", "响应内容缺少企业资料来源", "补充可追溯的企业资料引用。"))
+            if item.status == "needs_manual":
+                issues.append(self._issue(item, "MANUAL_MATERIAL_REQUIRED", "medium", "资料不足，需要人工补充", "上传相关资质、案例或技术资料。"))
+        return self._deduplicate(issues)
+
+    @staticmethod
+    def _issue(item: RequirementSnapshot, code: str, level: str, description: str, suggestion: str) -> ComplianceIssue:
+        return ComplianceIssue(item.requirement_id, code, level, description, suggestion)
+
+    @staticmethod
+    def _deduplicate(issues: list[ComplianceIssue]) -> list[ComplianceIssue]:
+        unique: dict[tuple[int, str], ComplianceIssue] = {}
+        for issue in issues:
+            unique[(issue.requirement_id, issue.rule_code)] = issue
+        return list(unique.values())

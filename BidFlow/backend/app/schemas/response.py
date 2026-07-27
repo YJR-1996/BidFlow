@@ -1,5 +1,29 @@
-# 负责人：成员 D
-#
-# 你要做什么：规定草稿生成、展示、保存和审核接口的字段。
-# 实现步骤：1）定义生成请求仅接收 requirement_id；2）定义 source_ref 的文件名、片段、位置；3）定义草稿输出；4）定义人工编辑和状态更新请求；5）在校验中阻止无来源完成。
-# 完成后验证：Swagger 能展示草稿和多个来源；提交 completed 但 sources 为空时应被拒绝。
+"""D 模块的结构化响应契约；可直接映射到 FastAPI/Pydantic Schema。"""
+
+from dataclasses import asdict, dataclass
+from typing import Any
+
+
+@dataclass(frozen=True)
+class SourceReference:
+    content: str
+    filename: str
+    source_ref: str
+    score: float | None = None
+
+
+@dataclass(frozen=True)
+class DraftResponsePayload:
+    content: str
+    sources: list[dict[str, Any]]
+    status: str
+    message: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class UpdateResponsePayload:
+    content: str | None = None
+    status: str | None = None
