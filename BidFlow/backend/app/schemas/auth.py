@@ -1,15 +1,17 @@
-from pydantic import BaseModel, Field, ConfigDict
+import uuid
 from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50, description="用户名")
-    password: str = Field(..., min_length=6, max_length=100, description="密码")
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6, max_length=128)
 
 
 class LoginRequest(BaseModel):
-    username: str = Field(..., description="用户名")
-    password: str = Field(..., description="密码")
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6, max_length=128)
 
 
 class TokenResponse(BaseModel):
@@ -18,8 +20,15 @@ class TokenResponse(BaseModel):
 
 
 class UserResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    username: str
+    is_active: bool
+    created_at: datetime
 
-    id: int
+    model_config = {"from_attributes": True}
+
+
+class RegisteredUserResponse(BaseModel):
+    id: uuid.UUID
     username: str
     created_at: datetime

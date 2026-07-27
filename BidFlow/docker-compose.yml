@@ -1,1 +1,21 @@
-# 负责人：组长／成员 A。步骤：1）定义 backend 服务；2）加载 .env；3）映射端口；4）挂载 uploads、data、chroma 持久化目录；5）声明重启策略。验收：docker compose up 后可访问 /api/health。
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bidflow-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+      - ./chroma:/app/chroma
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

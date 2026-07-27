@@ -1,40 +1,56 @@
-from fastapi import Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
+from uuid import UUID
 
-from app.db.session import get_db
+from fastapi import Depends, HTTPException, Request, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ForbiddenException, NotFoundException, http_exception
 from app.core.security import decode_access_token
-from app.core.exceptions import UnauthorizedException, NotFoundException, ForbiddenException
+from app.db.session import get_session
 from app.models.user import User
-from app.models.bid_project import BidProject
-
-security = HTTPBearer()
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
+async def get_current_user(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
 ) -> User:
-    token = credentials.credentials
-    user_id = decode_access_token(token)
-    if user_id is None:
-        raise UnauthorizedException(message="无效的访问令牌")
+    """从 Authorization: Bearer Token 中解析当前用户"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "Missing or invalid authorization header"},
+        )
 
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        raise UnauthorizedException(message="用户不存在")
+    token = auth_header.split(" ", 1)[1]
+    try:
+        user_id = decode_access_token(token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "Invalid or expired token"},
+        )
 
+    stmt = select(User).where(User.id == str(user_id))
+    result = await session.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "User not found"},
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": "User is inactive"},
+        )
     return user
 
 
-def get_project_or_404(
-    project_id: int,
-    db: Session = Depends(get_db),
+async def get_current_active_user(
     current_user: User = Depends(get_current_user),
-) -> BidProject:
-    project = db.query(BidProject).filter(BidProject.id == project_id).first()
-    if project is None:
-        raise NotFoundException(message="项目不存在")
-    if project.owner_id != current_user.id:
-        raise ForbiddenException(message="无权限访问该项目")
-    return project
+) -> User:
+    """确保当前用户处于激活状态"""
+    if not current_user.is_active:
+        raise http_exception(ForbiddenException("User is inactive"))
+    return current_user

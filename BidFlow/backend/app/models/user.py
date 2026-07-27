@@ -1,18 +1,28 @@
+import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy.dialects.mysql import CHAR
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.session import Base
+from app.db.base import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[uuid.UUID] = mapped_column(
+        CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
 
-    bid_projects = relationship("BidProject", back_populates="owner", cascade="all, delete-orphan")
-    company_documents = relationship("CompanyDocument", back_populates="owner", cascade="all, delete-orphan")
+    # 未来关联：用户的项目、上传的文档等
+    # projects: Mapped[list["BidProject"]] = relationship(back_populates="owner")

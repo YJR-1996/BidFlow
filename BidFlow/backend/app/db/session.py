@@ -1,26 +1,23 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
 
-engine = create_engine(
+engine = create_async_engine(
     settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+    echo=settings.DEBUG,
+    pool_pre_ping=True,
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
+async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_session() -> AsyncSession:
+    """请求级数据库会话生成器"""
+    async with async_session_factory() as session:
+        yield session
 
 
-def init_db():
-    from app.db.base import Base
-    Base.metadata.create_all(bind=engine)
+async def init_db() -> None:
+    """初始化数据库表（导入所有模型后调用）"""
+    from app.db.base import Base  # noqa: F401
+    await engine.create_all()
