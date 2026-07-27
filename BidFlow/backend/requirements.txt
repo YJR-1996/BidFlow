@@ -1,1 +1,23 @@
-# 负责人：组长／成员 A。步骤：1）列出 FastAPI、Uvicorn、SQLAlchemy、鉴权依赖；2）列出 PDF/DOCX 解析、Chroma、Embedding、LLM 依赖；3）列出 pytest。验收：全新虚拟环境可一次安装并运行测试。
+# FastAPI & ASGI server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncmy==0.2.9
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.18
+
+# Milvus
+pymilvus==2.5.3
+
+# LLM
+dashscope==1.22.0
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+httpx==0.28.1

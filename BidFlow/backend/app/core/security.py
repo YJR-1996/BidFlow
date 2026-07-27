@@ -1,15 +1,38 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：提供注册、登录和接口鉴权所需的安全工具。
-#
-# 实现顺序：
-# 1. 选择密码哈希库，编写“明文密码 -> password_hash”函数。
-# 2. 编写“明文密码 + password_hash -> 是否匹配”函数。
-# 3. 编写创建 JWT 的函数，Token 中至少放 user_id 和过期时间。
-# 4. 编写解析 JWT 的函数，签名错误、过期和缺少 user_id 都视为无效。
-# 5. 不在日志、接口或数据库中返回明文密码。
-#
-# 完成后手动验证：
-# 1. 相同密码两次哈希，结果应不同。
-# 2. 正确密码校验为真，错误密码校验为假。
-# 3. 修改 Token 任意字符后，解析必须失败。
+from datetime import datetime, timedelta
+from uuid import UUID
+
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
+from app.core.config import settings
+
+# 密码哈希上下文
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def hash_password(password: str) -> str:
+    """将明文密码哈希为 bcrypt 字符串"""
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """验证明文密码是否匹配哈希密码"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def create_access_token(user_id: UUID, expires_delta: timedelta | None = None) -> str:
+    """创建 JWT access token"""
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    payload = {"sub": str(user_id), "exp": expire}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def decode_access_token(token: str) -> UUID:
+    """解析 JWT token，返回 user_id；无效则抛出异常"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return UUID(payload["sub"])
+    except (JWTError, KeyError, ValueError) as exc:
+        raise ValueError(f"Invalid token: {exc}")

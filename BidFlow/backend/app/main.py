@@ -1,23 +1,64 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：让后端服务能够启动，并把其他成员写的接口统一接入。
-#
-# 开始前确认：
-# 1. core/config.py 能提供配置对象。
-# 2. db/session.py 能提供数据库初始化方法。
-# 3. api/router.py 已约定统一的 /api 路由前缀。
-#
-# 实现顺序：
-# 1. 创建 FastAPI 应用，并填写标题为 BidFlow API。
-# 2. 服务启动时调用数据库初始化方法。
-# 3. 配置 CORS，允许前端开发地址访问。
-# 4. 注册 core/exceptions.py 的统一异常处理器。
-# 5. 挂载 api/router.py 中的全部业务路由。
-# 6. 添加 GET /api/health，返回服务状态和当前时间。
-#
-# 出错时：配置读取失败或数据库初始化失败应在启动阶段打印明确原因，不要静默忽略。
-#
-# 完成后手动验证：
-# 1. 在 backend 目录运行 Uvicorn 启动命令。
-# 2. 浏览器打开 /api/health，必须返回 200。
-# 3. 浏览器打开 /docs，必须能看到接口文档。
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.router import router as api_router
+from app.core.config import settings
+from app.core.exceptions import BaseAppException, app_exception_handler
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期：启动时初始化数据库"""
+    from app.db.session import init_db
+
+    try:
+        await init_db()
+        print("[BidFlow] 数据库初始化成功")
+    except Exception as e:
+        print(f"[BidFlow] 数据库初始化失败: {e}")
+    yield
+
+
+app = FastAPI(
+    title="BidFlow API",
+    description="AI招投标文件智能编制与合规核查平台",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# 统一异常处理器
+app.add_exception_handler(BaseAppException, app_exception_handler)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 挂载业务路由
+app.include_router(api_router)
+
+
+@app.get("/api/health")
+async def health_check():
+    """健康检查"""
+    from datetime import datetime
+
+    try:
+        from app.db.session import async_session_factory
+        async with async_session_factory() as session:
+            await session.execute("SELECT 1")
+        db_status = "connected"
+    except Exception:
+        db_status = "disconnected"
+
+    return {
+        "status": "ok",
+        "db": db_status,
+        "timestamp": datetime.utcnow().isoformat(),
+    }

@@ -1,15 +1,56 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：把“数据库会话、登录用户、资源归属”写成可复用工具，避免每个路由重复写。
-#
-# 实现顺序：
-# 1. 编写 get_db：请求开始时创建数据库会话，请求结束时关闭会话。
-# 2. 从 Authorization: Bearer Token 读取 JWT。
-# 3. 调用 security.py 解析 user_id，再从 users 表查询用户。
-# 4. 用户不存在、Token 无效或过期时返回 401。
-# 5. 编写项目归属校验：项目不存在返回 404，不属于当前用户返回 403。
-#
-# 完成后手动验证：
-# 1. 不带 Token 请求受保护接口，应返回 401。
-# 2. A 用户请求 B 用户项目，应返回 403。
-# 3. 正确用户请求自己的项目，应继续执行后续路由。
+from uuid import UUID
+
+from fastapi import Depends, HTTPException, Request, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ForbiddenException, NotFoundException, http_exception
+from app.core.security import decode_access_token
+from app.db.session import get_session
+from app.models.user import User
+
+
+async def get_current_user(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    """从 Authorization: Bearer Token 中解析当前用户"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "Missing or invalid authorization header"},
+        )
+
+    token = auth_header.split(" ", 1)[1]
+    try:
+        user_id = decode_access_token(token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "Invalid or expired token"},
+        )
+
+    stmt = select(User).where(User.id == str(user_id))
+    result = await session.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "User not found"},
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": "User is inactive"},
+        )
+    return user
+
+
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """确保当前用户处于激活状态"""
+    if not current_user.is_active:
+        raise http_exception(ForbiddenException("User is inactive"))
+    return current_user

@@ -1,1 +1,11 @@
-# 负责人：组长／成员 A。步骤：导入各业务路由；统一添加 /api 前缀、标签和版本说明；在 main 中仅挂载本路由。验收：Swagger 可按认证、项目、资料、响应、合规分类浏览全部接口。
+from fastapi import APIRouter
+
+from app.api.routes import auth  # noqa: F401  # 导入以注册路由
+
+# 预留其他业务路由导入
+# from app.api.routes import projects
+# from app.api.routes import tender_documents
+# from app.api.routes import requirements
+
+router = APIRouter(prefix="/api", tags=["统一入口"])
+router.include_router(auth.router)

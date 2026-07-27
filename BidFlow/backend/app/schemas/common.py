@@ -1,11 +1,33 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：统一所有接口给前端的数据形状，减少前端逐接口判断。
-#
-# 实现步骤：
-# 1. 定义成功响应：code、message、data。
-# 2. 定义列表响应：items、total、page、page_size。
-# 3. 定义错误响应：code、message、detail。
-# 4. 与前端确认 code=0 表示成功，非 0 表示业务失败。
-#
-# 完成后手动验证：打开 Swagger，项目列表和登录接口的返回结构都应包含统一字段。
+from datetime import datetime
+from typing import Generic, TypeVar
+
+from pydantic import BaseModel
+
+T = TypeVar("T")
+
+
+class SuccessResponse(BaseModel, Generic[T]):
+    """统一成功响应格式"""
+    code: int = 0
+    message: str = "success"
+    data: T | None = None
+
+
+class ListResponse(BaseModel, Generic[T]):
+    """统一列表响应格式"""
+    code: int = 0
+    message: str = "success"
+    data: list[T] = []
+    total: int = 0
+    page: int = 1
+    page_size: int = 20
+
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+
+
+class ErrorResponse(BaseModel):
+    """统一错误响应格式"""
+    detail: ErrorDetail

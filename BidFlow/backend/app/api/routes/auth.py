@@ -1,16 +1,85 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：提供注册、登录和获取当前用户三个接口。
-#
-# 实现顺序：
-# 1. 注册接口接收用户名和密码，先用 schemas/auth.py 校验格式。
-# 2. 查询 users 表；用户名存在时返回“用户名已存在”。
-# 3. 调用 security.py 哈希密码并创建用户记录。
-# 4. 登录接口查询用户，调用密码校验函数；错误时统一返回“用户名或密码错误”。
-# 5. 登录成功后创建 JWT，返回 Token 和用户基本信息。
-# 6. 当前用户接口直接复用 deps.py 的 get_current_user。
-#
-# 完成后手动验证：
-# 1. 注册 test_user 后再次注册同名用户，应失败。
-# 2. 用正确密码登录，应得到 Token。
-# 3. 在 Swagger 中携带 Token 调用当前用户接口，应返回 test_user。
+import uuid
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import get_current_user
+from app.core.exceptions import ConflictException, http_exception
+from app.core.security import create_access_token, hash_password, verify_password
+from app.db.session import get_session
+from app.models.user import User
+from app.schemas.auth import (
+    LoginRequest,
+    RegisteredUserResponse,
+    RegisterRequest,
+    TokenResponse,
+    UserResponse,
+)
+
+router = APIRouter(prefix="/auth", tags=["认证"])
+
+
+@router.post(
+    "/register",
+    response_model=RegisteredUserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def register(body: RegisterRequest, session: AsyncSession = Depends(get_session)):
+    """用户注册"""
+    # 检查用户名是否已存在
+    stmt = select(User).where(User.username == body.username)
+    result = await session.execute(stmt)
+    if result.scalar_one_or_none():
+        raise http_exception(ConflictException("用户名已存在"))
+
+    user = User(
+        id=str(uuid.uuid4()),
+        username=body.username,
+        password_hash=hash_password(body.password),
+        is_active=True,
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+
+    return RegisteredUserResponse(
+        id=user.id,
+        username=user.username,
+        created_at=user.created_at,
+    )
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)):
+    """用户登录"""
+    stmt = select(User).where(User.username == body.username)
+    result = await session.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if not user or not verify_password(body.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "UNAUTHORIZED", "message": "用户名或密码错误"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": "用户已禁用"},
+        )
+
+    token = create_access_token(user.id)
+    return TokenResponse(access_token=token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    """获取当前登录用户信息"""
+    return UserResponse(
+        id=current_user.id,
+        username=current_user.username,
+        is_active=current_user.is_active,
+        created_at=current_user.created_at,
+    )
