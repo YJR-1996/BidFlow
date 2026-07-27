@@ -1,1 +1,25 @@
-# 负责人：组长／成员 A。步骤：定义注册用户名与密码长度校验、登录请求、Token 响应、当前用户响应；禁止响应中出现 password_hash。输入：认证路由。输出：Pydantic 校验模型。验收：非法用户名和短密码返回 422。
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime
+
+
+class RegisterRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50, description="用户名")
+    password: str = Field(..., min_length=6, max_length=100, description="密码")
+
+
+class LoginRequest(BaseModel):
+    username: str = Field(..., description="用户名")
+    password: str = Field(..., description="密码")
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    created_at: datetime

@@ -1,5 +1,13 @@
-# 负责人：成员 C
-#
-# 你要做什么：约定企业资料上传和处理状态给前端的字段。
-# 实现步骤：1）定义资质、案例、产品、技术方案、其他五种类型；2）定义上传结果；3）定义列表项；4）返回文件名、类型、状态、错误原因、时间。
-# 完成后验证：前端根据 status 可直接显示“可检索”或“处理失败”。
+from pydantic import BaseModel, ConfigDict
+from typing import Optional
+from datetime import datetime
+
+
+class CompanyDocumentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    filename: str
+    file_type: Optional[str]
+    status: str
+    created_at: datetime

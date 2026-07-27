@@ -1,1 +1,26 @@
-# 负责人：组长／成员 A。步骤：1）根据配置创建 SQLAlchemy 引擎；2）创建 Session 工厂；3）提供请求级数据库会话；4）提供初始化建表方法。验收：服务首次启动可创建 SQLite 数据表。
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+
+from app.core.config import settings
+
+engine = create_engine(
+    settings.DATABASE_URL,
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def init_db():
+    from app.db.base import Base
+    Base.metadata.create_all(bind=engine)

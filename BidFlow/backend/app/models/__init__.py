@@ -1,5 +1,17 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：把所有 ORM 表模型放入同一个 models 包，方便 db/base.py 集中导入。
-# 实现步骤：1）每位成员将自己的表模型放到独立文件；2）不要把查询逻辑放在这里；3）新增模型后通知 A 在 db/base.py 注册。
-# 完成后验证：db/base.py 导入所有模型后，初始化数据库能创建相应表。
+from app.models.user import User
+from app.models.bid_project import BidProject
+from app.models.tender_document import TenderDocument
+from app.models.requirement import Requirement
+from app.models.company_document import CompanyDocument
+from app.models.response import Response
+from app.models.compliance_issue import ComplianceIssue
+
+__all__ = [
+    "User",
+    "BidProject",
+    "TenderDocument",
+    "Requirement",
+    "CompanyDocument",
+    "Response",
+    "ComplianceIssue",
+]

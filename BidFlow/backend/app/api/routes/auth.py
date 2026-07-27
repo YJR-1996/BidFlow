@@ -1,16 +1,44 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：提供注册、登录和获取当前用户三个接口。
-#
-# 实现顺序：
-# 1. 注册接口接收用户名和密码，先用 schemas/auth.py 校验格式。
-# 2. 查询 users 表；用户名存在时返回“用户名已存在”。
-# 3. 调用 security.py 哈希密码并创建用户记录。
-# 4. 登录接口查询用户，调用密码校验函数；错误时统一返回“用户名或密码错误”。
-# 5. 登录成功后创建 JWT，返回 Token 和用户基本信息。
-# 6. 当前用户接口直接复用 deps.py 的 get_current_user。
-#
-# 完成后手动验证：
-# 1. 注册 test_user 后再次注册同名用户，应失败。
-# 2. 用正确密码登录，应得到 Token。
-# 3. 在 Swagger 中携带 Token 调用当前用户接口，应返回 test_user。
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.core.security import hash_password, verify_password, create_access_token
+from app.core.exceptions import ValidationException, UnauthorizedException
+from app.models.user import User
+from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserResponse
+from app.schemas.common import ApiResponse
+from app.api.deps import get_current_user
+
+router = APIRouter()
+
+
+@router.post("/register", response_model=ApiResponse[UserResponse])
+def register(request: RegisterRequest, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.username == request.username).first()
+    if existing:
+        raise ValidationException(message="用户名已存在")
+
+    user = User(
+        username=request.username,
+        password_hash=hash_password(request.password),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return ApiResponse(data=user)
+
+
+@router.post("/login", response_model=ApiResponse[TokenResponse])
+def login(request: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == request.username).first()
+    if not user or not verify_password(request.password, user.password_hash):
+        raise UnauthorizedException(message="用户名或密码错误")
+
+    access_token = create_access_token(user.id)
+    return ApiResponse(data=TokenResponse(access_token=access_token))
+
+
+@router.get("/me", response_model=ApiResponse[UserResponse])
+def get_me(current_user: User = Depends(get_current_user)):
+    return ApiResponse(data=current_user)

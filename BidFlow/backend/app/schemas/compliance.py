@@ -1,4 +1,29 @@
-# 负责人：成员 D
-#
-# 你要做什么：规定合规核查结果和审查报告的返回格式。
-# 实现步骤：1）定义风险项字段；2）定义高、中、低风险统计；3）定义完成度和待办；4）定义完整报告；5）限定风险等级。验收：前端不计算指标，只展示该模型返回的数据。
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
+from datetime import datetime
+
+
+class ComplianceIssueResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    project_id: int
+    requirement_id: Optional[int]
+    level: str
+    rule_code: Optional[str]
+    description: Optional[str]
+    suggestion: Optional[str]
+    status: str
+    created_at: datetime
+
+
+class ComplianceReportResponse(BaseModel):
+    project_id: int
+    total_requirements: int
+    completed_count: int
+    pending_review_count: int
+    risk_count: int
+    completion_rate: float
+    high_risks: List[ComplianceIssueResponse] = []
+    medium_risks: List[ComplianceIssueResponse] = []
+    low_risks: List[ComplianceIssueResponse] = []

@@ -1,5 +1,23 @@
-# 负责人：成员 D
-#
-# 你要做什么：保存规则引擎发现的每一条风险，供报告和前端展示。
-# 实现步骤：1）关联 project_id 和可选 requirement_id；2）保存 rule_code；3）保存 high、medium、low 等级；4）保存说明、建议和处理状态；5）记录创建和更新时间。
-# 完成后验证：报告中的每条风险都能跳回具体需求和对应规则。
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
+
+from app.db.session import Base
+
+
+class ComplianceIssue(Base):
+    __tablename__ = "compliance_issues"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("bid_projects.id"), nullable=False)
+    requirement_id = Column(Integer, ForeignKey("requirements.id"))
+    level = Column(String(10), default="低")
+    rule_code = Column(String(50))
+    description = Column(Text)
+    suggestion = Column(Text)
+    status = Column(String(20), default="未处理")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    project = relationship("BidProject", back_populates="compliance_issues")
+    requirement = relationship("Requirement", back_populates="compliance_issues")

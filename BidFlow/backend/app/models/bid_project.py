@@ -1,5 +1,26 @@
-# 负责人：成员 B
-#
-# 你要做什么：定义“一个投标项目”在数据库中需要保存的信息。
-# 实现步骤：1）创建 id 主键；2）保存 owner_id；3）保存项目名称、招标单位、截止日期和状态；4）记录创建与更新时间；5）建立与文件、需求、风险的关联。
-# 完成后验证：新建项目后能在数据库看到字段；删除项目时关联数据按约定处理；其他用户不能通过 owner_id 看到该项目。
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
+
+from app.db.session import Base
+
+
+class BidProject(Base):
+    __tablename__ = "bid_projects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String(200), nullable=False)
+    tenderer = Column(String(200))
+    deadline = Column(DateTime)
+    budget = Column(Integer)
+    description = Column(Text)
+    status = Column(String(20), default="准备中")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = relationship("User", back_populates="bid_projects")
+    tender_documents = relationship("TenderDocument", back_populates="project", cascade="all, delete-orphan")
+    requirements = relationship("Requirement", back_populates="project", cascade="all, delete-orphan")
+    compliance_issues = relationship("ComplianceIssue", back_populates="project", cascade="all, delete-orphan")

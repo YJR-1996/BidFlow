@@ -1,16 +1,38 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：集中管理所有配置，任何文件都不能直接写死密钥、路径或模型名称。
-#
-# 实现顺序：
-# 1. 定义应用名称、运行环境、数据库路径和上传目录配置。
-# 2. 定义 Chroma 数据目录、Embedding 模型和大模型 API 配置。
-# 3. 定义 JWT 密钥和 Token 有效期配置。
-# 4. 从项目根目录的 .env 读取变量；没有 .env 时提示复制 .env.example。
-# 5. 对 API Key、JWT 密钥等必填项做启动校验。
-# 6. 导出唯一 settings 对象，其他文件只能从此处读取配置。
-#
-# 完成后手动验证：
-# 1. 填写 .env 后启动服务，配置应被正常读取。
-# 2. 删除 JWT 密钥后启动，必须显示缺少哪个变量。
-# 3. 全项目搜索，不应在其他代码中出现真实 API Key。
+import os
+from pathlib import Path
+from typing import Optional
+
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    APP_NAME: str = "BidFlow API"
+    APP_ENV: str = "development"
+
+    BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent.parent
+
+    DATABASE_URL: str = f"sqlite:///{BASE_DIR / 'data' / 'bidflow.db'}"
+
+    UPLOAD_DIR: Path = BASE_DIR / "uploads"
+    MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024
+    ALLOWED_EXTENSIONS: set = {"txt", "pdf", "docx"}
+
+    CHROMA_DIR: Path = BASE_DIR / "data" / "chroma"
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+
+    LLM_API_KEY: Optional[str] = None
+    LLM_BASE_URL: Optional[str] = None
+    LLM_MODEL: str = "qwen-plus"
+
+    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+
+    model_config = {"env_file": ".env", "case_sensitive": True}
+
+
+settings = Settings()
+
+settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+(settings.BASE_DIR / "data").mkdir(parents=True, exist_ok=True)
+settings.CHROMA_DIR.mkdir(parents=True, exist_ok=True)

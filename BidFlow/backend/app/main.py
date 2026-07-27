@@ -1,23 +1,43 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：让后端服务能够启动，并把其他成员写的接口统一接入。
-#
-# 开始前确认：
-# 1. core/config.py 能提供配置对象。
-# 2. db/session.py 能提供数据库初始化方法。
-# 3. api/router.py 已约定统一的 /api 路由前缀。
-#
-# 实现顺序：
-# 1. 创建 FastAPI 应用，并填写标题为 BidFlow API。
-# 2. 服务启动时调用数据库初始化方法。
-# 3. 配置 CORS，允许前端开发地址访问。
-# 4. 注册 core/exceptions.py 的统一异常处理器。
-# 5. 挂载 api/router.py 中的全部业务路由。
-# 6. 添加 GET /api/health，返回服务状态和当前时间。
-#
-# 出错时：配置读取失败或数据库初始化失败应在启动阶段打印明确原因，不要静默忽略。
-#
-# 完成后手动验证：
-# 1. 在 backend 目录运行 Uvicorn 启动命令。
-# 2. 浏览器打开 /api/health，必须返回 200。
-# 3. 浏览器打开 /docs，必须能看到接口文档。
+from datetime import datetime
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
+from app.core.exceptions import register_exception_handlers
+from app.db.session import init_db
+from app.api.router import api_router
+from app.schemas.common import ApiResponse
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    description="BidFlow：AI 招投标文件智能编制与合规核查平台",
+    version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+register_exception_handlers(app)
+
+app.include_router(api_router)
+
+
+@app.on_event("startup")
+def startup_event():
+    init_db()
+    print(f"✅ {settings.APP_NAME} 启动成功")
+
+
+@app.get("/api/health", tags=["健康检查"])
+def health_check():
+    return ApiResponse(data={
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat(),
+        "app_name": settings.APP_NAME,
+    })

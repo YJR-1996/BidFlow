@@ -1,1 +1,18 @@
-# 负责人：组长／成员 A。步骤：1）定义 users 表主键；2）定义唯一用户名和 password_hash；3）记录创建时间；4）关联用户拥有的项目与资料。验收：同名用户不能重复注册，密码明文不入库。
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
+
+from app.db.session import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    bid_projects = relationship("BidProject", back_populates="owner", cascade="all, delete-orphan")
+    company_documents = relationship("CompanyDocument", back_populates="owner", cascade="all, delete-orphan")
