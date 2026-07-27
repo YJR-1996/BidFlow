@@ -1,12 +1,18 @@
-# 负责人：组长／成员 A
-#
-# 你要做什么：给所有测试提供隔离的数据库、文件目录和登录身份。
-#
-# 实现步骤：
-# 1. 测试开始时创建临时 SQLite 数据库与临时上传目录。
-# 2. 覆盖正式配置，使测试不读取真实 .env 或真实 API Key。
-# 3. 创建 FastAPI TestClient。
-# 4. 提供已注册用户、登录 Token、模拟项目等公共 fixture。
-# 5. 每个测试结束后删除临时数据。
-#
-# 完成后手动验证：运行任意测试后，项目根目录的 data、uploads、chroma 不应新增测试垃圾文件。
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+# 将 backend 目录加入 Python 路径
+sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
+
+
+@pytest.fixture
+def event_loop():
+    """为 pytest-asyncio 提供事件循环"""
+    import asyncio
+
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
