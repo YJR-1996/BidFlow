@@ -1,0 +1,1 @@
+# 负责人：组长／成员 A。步骤：1）定义 backend 服务；2）加载 .env；3）映射端口；4）挂载 uploads、data、chroma 持久化目录；5）声明重启策略。验收：docker compose up 后可访问 /api/health。

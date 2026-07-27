@@ -1,0 +1,1 @@
+# 负责人：组长／成员 A。步骤：1）列出 FastAPI、Uvicorn、SQLAlchemy、鉴权依赖；2）列出 PDF/DOCX 解析、Chroma、Embedding、LLM 依赖；3）列出 pytest。验收：全新虚拟环境可一次安装并运行测试。

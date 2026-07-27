@@ -1,0 +1,1 @@
+// 负责人：Codex。步骤：声明 Vue、Vite、Vue Router、Pinia、Element Plus、Axios；配置 dev、build、preview 脚本。验收：安装依赖后可启动开发服务并构建生产包。
