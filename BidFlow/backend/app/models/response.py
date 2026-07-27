@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, String
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
@@ -11,7 +11,8 @@ class Response(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     requirement_id = Column(Integer, ForeignKey("requirements.id"), nullable=False)
-    content = Column(Text)
+    ai_content = Column(Text)
+    edited_content = Column(Text)
     source_refs = Column(Text)
     status = Column(String(20), default="草稿")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
