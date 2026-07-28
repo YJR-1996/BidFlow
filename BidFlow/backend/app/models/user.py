@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.dialects.mysql import CHAR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
+from app.db.session import Base
 
 
 class User(Base):
@@ -24,5 +24,9 @@ class User(Base):
         DateTime, server_default=func.now(), onupdate=func.now()
     )
 
-    # 未来关联：用户的项目、上传的文档等
-    # projects: Mapped[list["BidProject"]] = relationship(back_populates="owner")
+    bid_projects: Mapped[list["BidProject"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan"
+    )
+    company_documents: Mapped[list["CompanyDocument"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan"
+    )

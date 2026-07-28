@@ -1,19 +1,12 @@
-from app.db.session import Base
+"""集中导入模型，供 init_db 注册所有 ORM 表。"""
 
-from app.models.user import User
-from app.models.bid_project import BidProject
-from app.models.tender_document import TenderDocument
-from app.models.requirement import Requirement
-from app.models.company_document import CompanyDocument
-from app.models.response import Response
-from app.models.compliance_issue import ComplianceIssue
+from app.db.session import Base
+from app.models.user import User  # noqa: F401
+from app.models.bid_project import BidProject  # noqa: F401
+from app.models.tender_document import TenderDocument  # noqa: F401
+from app.models.requirement import Requirement  # noqa: F401
+from app.models.company_document import CompanyDocument  # noqa: F401
+from app.models.response import Response  # noqa: F401
+from app.models.compliance_issue import ComplianceIssue  # noqa: F401
 
 __all__ = ["Base"]
-from sqlalchemy.orm import DeclarativeBase
-
-from app.models.user import User  # noqa: F401  # 导入以注册到 Base._decl_class_registry
-
-
-class Base(DeclarativeBase):
-    """ORM 基类，所有模型继承此类"""
-    pass

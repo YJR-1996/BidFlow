@@ -1,6 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import settings
+
+
+class Base(DeclarativeBase):
+    """所有 ORM 模型继承的统一基类。"""
+
+    pass
 
 engine = create_async_engine(
     settings.DATABASE_URL,
@@ -17,7 +24,15 @@ async def get_session() -> AsyncSession:
         yield session
 
 
+async def get_db() -> AsyncSession:
+    """兼容既有路由和测试使用的数据库会话依赖名称。"""
+    async for session in get_session():
+        yield session
+
+
 async def init_db() -> None:
     """初始化数据库表（导入所有模型后调用）"""
-    from app.db.base import Base  # noqa: F401
-    await engine.create_all()
+    from app.db import base  # noqa: F401
+
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
