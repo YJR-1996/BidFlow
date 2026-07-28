@@ -3,6 +3,8 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 gunicorn==23.0.0
 pydantic-settings==2.7.1
+# pymilvus 2.5.3 仍通过 pkg_resources 导入版本信息；新版 setuptools 已移除该模块。
+setuptools<81
 
 # Database
 sqlalchemy[asyncio]==2.0.36
