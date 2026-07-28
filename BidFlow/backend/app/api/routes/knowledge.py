@@ -26,8 +26,8 @@ from app.schemas.company_document import (
 from app.services.company_material_service import CompanyMaterialService
 from app.services.retrieval_service import RetrievalService
 
-# 所有企业资料/检索相关接口统一前缀 /api
-router = APIRouter(prefix="/api", tags=["company-materials"])
+# 所有企业资料/检索相关接口统一前缀 /api（由 router.py 统一添加，这里不再重复）
+router = APIRouter(tags=["company-materials"])
 
 
 # ---------------------------------------------------------------------------

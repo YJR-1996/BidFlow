@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>注册 - BidFlow AI 智能编纂与核查平台</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface-dim": "#d8dadd",
+                        "tertiary": "#286c00",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e0e3e6",
+                        "on-tertiary-fixed": "#072100",
+                        "primary-container": "#1a73e8",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eceef1",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f4f7",
+                        "primary": "#005bbf",
+                        "inverse-primary": "#adc7ff",
+                        "surface-bright": "#f7f9fc",
+                        "on-surface-variant": "#414754",
+                        "on-primary-fixed": "#001a41",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e6e8eb",
+                        "outline-variant": "#c1c6d6",
+                        "on-surface": "#191c1e",
+                        "inverse-on-surface": "#eff1f4",
+                        "surface-container-highest": "#e0e3e6",
+                        "secondary-container": "#e0dfe1",
+                        "outline": "#727785",
+                        "primary-fixed-dim": "#adc7ff",
+                        "on-tertiary-fixed-variant": "#1d5200",
+                        "tertiary-container": "#348800",
+                        "primary-fixed": "#d8e2ff",
+                        "on-primary-fixed-variant": "#004493",
+                        "tertiary-fixed-dim": "#80dd52",
+                        "surface-tint": "#005bc0",
+                        "secondary-fixed": "#e3e2e4",
+                        "secondary": "#5e5e60",
+                        "background": "#f7f9fc",
+                        "on-secondary-container": "#626265",
+                        "on-secondary-fixed-variant": "#464749",
+                        "inverse-surface": "#2d3133",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#ffffff",
+                        "surface": "#f7f9fc",
+                        "secondary-fixed-dim": "#c7c6c8",
+                        "on-tertiary-container": "#010600",
+                        "on-secondary-fixed": "#1a1c1d",
+                        "tertiary-fixed": "#9bfa6b",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap-sm": "8px",
+                        "gutter": "24px",
+                        "container-max-width": "1440px",
+                        "stack-gap-lg": "24px",
+                        "stack-gap-md": "16px",
+                        "sidebar-width": "260px",
+                        "header-height": "64px",
+                        "padding-page": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "mono-code": ["JetBrains Mono"],
+                        "title-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ai-glow {
+            box-shadow: 0 0 20px rgba(26, 115, 232, 0.1);
+        }
+        .loading-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #fff;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 9999;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body class="overflow-hidden">
+<!-- Global Message Notification -->
+<div class="toast flex items-center gap-3 px-6 py-3 bg-white border border-outline-variant shadow-xl rounded-lg" id="messageToast">
+<span class="material-symbols-outlined" id="toastIcon">check_circle</span>
+<span class="font-body-md text-on-surface" id="toastText"></span>
+</div>
+<main class="flex h-screen w-full">
+<!-- Left Visual Side -->
+<section class="hidden lg:flex lg:w-3/5 xl:w-2/3 relative items-center justify-center bg-primary-container overflow-hidden">
+<!-- Animated Background -->
+
+<!-- Content Overlay -->
+<div class="relative z-10 px-16 max-w-4xl">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">chevron_forward</span>
+</div>
+<h1 class="font-headline-md text-white tracking-tight">BidFlow AI</h1>
+</div>
+<h2 class="font-display-lg text-white mb-6 leading-tight">
+                    构建智能化的<br/>招投标数字化新生态
+                </h2>
+<p class="font-body-md text-white/80 max-w-xl mb-12">
+                    通过深度学习与自然语言处理技术，为政府及企业级用户提供高效率的标书编纂、合规性自动核查及全流程资产管理，将繁杂的工作化繁为简。
+                </p>
+<!-- Feature Grid (Glassmorphism) -->
+<div class="grid grid-cols-2 gap-6">
+<div class="glass-panel p-6 rounded-2xl border border-white/20 ai-glow">
+<span class="material-symbols-outlined text-white mb-3">auto_awesome</span>
+<h3 class="font-title-sm text-white mb-2">智能生成</h3>
+<p class="font-body-sm text-white/70">基于行业语料库，秒级生成高质量应标文件。</p>
+</div>
+<div class="glass-panel p-6 rounded-2xl border border-white/20">
+<span class="material-symbols-outlined text-white mb-3">verified</span>
+<h3 class="font-title-sm text-white mb-2">合规校验</h3>
+<p class="font-body-sm text-white/70">100%覆盖核心控标项，规避审计合规风险。</p>
+</div>
+</div>
+</div>
+<!-- Subtle Texture Over -->
+<div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png');"></div>
+</section>
+<!-- Right Form Side -->
+<section class="w-full lg:w-2/5 xl:w-1/3 h-full flex flex-col justify-center px-12 xl:px-20 bg-surface">
+<div class="max-w-md w-full mx-auto">
+<div class="mb-10">
+<h2 class="font-headline-md text-on-surface mb-2">创建新账号</h2>
+<p class="font-body-md text-on-surface-variant">加入 BidFlow AI，开启高效智能编纂之旅。</p>
+</div>
+<form class="space-y-6" id="registerForm">
+<!-- Username Input -->
+<div class="space-y-2">
+<label class="font-label-caps text-on-surface-variant block" for="username">用户名</label>
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg group-focus-within:text-primary transition-colors">person</span>
+<input class="w-full pl-10 pr-4 py-3 bg-white border border-outline-variant rounded-lg font-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" id="username" name="username" placeholder="请输入用户名 (至少3位)" type="text"/>
+</div>
+<p class="text-error font-body-sm hidden" id="username-error">用户名长度至少为3位</p>
+</div>
+<!-- Password Input -->
+<div class="space-y-2">
+<label class="font-label-caps text-on-surface-variant block" for="password">密码</label>
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full pl-10 pr-12 py-3 bg-white border border-outline-variant rounded-lg font-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" id="password" name="password" placeholder="请输入密码 (至少6位)" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface" onclick="togglePassword('password', this)" type="button">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+</div>
+<p class="text-error font-body-sm hidden" id="password-error">密码长度至少为6位</p>
+</div>
+<!-- Confirm Password Input -->
+<div class="space-y-2">
+<label class="font-label-caps text-on-surface-variant block" for="confirmPassword">确认密码</label>
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg group-focus-within:text-primary transition-colors">verified_user</span>
+<input class="w-full pl-10 pr-12 py-3 bg-white border border-outline-variant rounded-lg font-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface" onclick="togglePassword('confirmPassword', this)" type="button">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+</div>
+<p class="text-error font-body-sm hidden" id="confirm-error">两次输入的密码不一致</p>
+</div>
+<!-- Agreement -->
+<div class="flex items-start gap-3">
+<input class="mt-1 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" id="agreement" type="checkbox"/>
+<label class="font-body-sm text-on-surface-variant" for="agreement">
+                            我已阅读并同意 <a class="text-primary hover:underline transition-all" href="#">服务协议</a> 和 <a class="text-primary hover:underline transition-all" href="#">隐私政策</a>
+</label>
+</div>
+<!-- Register Button -->
+<button class="w-full py-3.5 bg-primary text-white rounded-lg font-title-sm hover:bg-on-primary-fixed-variant active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm" id="registerBtn" type="submit">
+<span id="btnText">注册账号</span>
+<div class="loading-spinner hidden" id="loadingIcon"></div>
+</button>
+</form>
+<div class="mt-8 pt-8 border-t border-outline-variant text-center">
+<p class="font-body-md text-on-surface-variant">
+                        已有账号？
+                        <a class="text-primary font-bold hover:underline transition-all ml-1" href="/login">去登录</a>
+</p>
+</div>
+</div>
+<!-- Footer Meta -->
+<footer class="mt-12 text-center">
+<p class="font-body-sm text-outline">© 2024 BidFlow AI. 全球领先的智能采购协同平台</p>
+</footer>
+</section>
+</main>
+<script>
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerText = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.innerText = 'visibility';
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('messageToast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastText');
+            
+            text.innerText = message;
+            if (type === 'success') {
+                icon.innerText = 'check_circle';
+                icon.className = 'material-symbols-outlined text-tertiary';
+                toast.className = 'toast show flex items-center gap-3 px-6 py-3 bg-white border border-tertiary/20 shadow-xl rounded-lg';
+            } else {
+                icon.innerText = 'error';
+                icon.className = 'material-symbols-outlined text-error';
+                toast.className = 'toast show flex items-center gap-3 px-6 py-3 bg-white border border-error/20 shadow-xl rounded-lg';
+            }
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        const form = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const btnText = document.getElementById('btnText');
+        const loadingIcon = document.getElementById('loadingIcon');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const agreement = document.getElementById('agreement').checked;
+
+            // Reset Errors
+            document.getElementById('username-error').classList.add('hidden');
+            document.getElementById('password-error').classList.add('hidden');
+            document.getElementById('confirm-error').classList.add('hidden');
+
+            let hasError = false;
+
+            if (username.length < 3) {
+                document.getElementById('username-error').classList.remove('hidden');
+                hasError = true;
+            }
+
+            if (password.length < 6) {
+                document.getElementById('password-error').classList.remove('hidden');
+                hasError = true;
+            }
+
+            if (password !== confirmPassword) {
+                document.getElementById('confirm-error').classList.remove('hidden');
+                hasError = true;
+            }
+
+            if (!agreement) {
+                showToast('请阅读并同意服务协议', 'error');
+                return;
+            }
+
+            if (hasError) return;
+
+            // Start Loading State
+            registerBtn.disabled = true;
+            btnText.innerText = '正在创建账号...';
+            loadingIcon.classList.remove('hidden');
+
+            // Simulate API Call
+            setTimeout(() => {
+                showToast('注册成功！正在前往登录页面', 'success');
+                
+                setTimeout(() => {
+                    // Simulation of navigation
+                    window.location.href = '/login';
+                }, 1500);
+
+                // Reset button state just in case
+                registerBtn.disabled = false;
+                btnText.innerText = '注册账号';
+                loadingIcon.classList.add('hidden');
+            }, 1200);
+        });
+
+        // Real-time simple validation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const error = document.getElementById('confirm-error');
+            if (this.value !== password && this.value.length > 0) {
+                error.classList.remove('hidden');
+            } else {
+                error.classList.add('hidden');
+            }
+        });
+    </script>
+</body></html>

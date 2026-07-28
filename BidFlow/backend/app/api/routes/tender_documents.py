@@ -9,7 +9,7 @@ from app.models.tender_document import TenderDocument
 from app.models.requirement import Requirement
 from app.schemas.tender_document import TenderDocumentResponse, ParseResultResponse
 from app.schemas.common import ApiResponse
-from app.api.deps import get_current_user, get_project_or_404
+from app.api.deps import get_current_user, get_project_or_404_sync
 from app.services.file_storage import file_storage_service
 from app.services.document_parser import document_parser_service
 from app.services.tender_requirement_extractor import tender_requirement_extractor_service
@@ -21,7 +21,7 @@ router = APIRouter()
 @router.post("/projects/{project_id}/tender-documents", response_model=ApiResponse[TenderDocumentResponse])
 def upload_tender_document(
     file: UploadFile = File(...),
-    project: BidProject = Depends(get_project_or_404),
+    project: BidProject = Depends(get_project_or_404_sync),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -95,7 +95,7 @@ def parse_tender_document(
 
 @router.get("/projects/{project_id}/tender-documents", response_model=ApiResponse[List[TenderDocumentResponse]])
 def list_tender_documents(
-    project: BidProject = Depends(get_project_or_404),
+    project: BidProject = Depends(get_project_or_404_sync),
     db: Session = Depends(get_db),
 ):
     docs = db.query(TenderDocument).filter(

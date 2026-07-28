@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
-from app.db.session import Base
+from app.db.base import Base
 
 
 class Requirement(Base):
@@ -18,7 +18,7 @@ class Requirement(Base):
     source_ref = Column(String(200))
     priority = Column(String(10), default="P2")
     status = Column(String(20), default="未处理")
-    assignee_id = Column(Integer, ForeignKey("users.id"))
+    assignee_id = Column(String(36), ForeignKey("users.id"))
     risk_level = Column(String(10), default="低")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

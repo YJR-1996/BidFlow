@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BidFlow AI - AI草案生成</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Custom Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#001945",
+                        "on-primary-fixed": "#001a41",
+                        "on-surface-variant": "#414754",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#c55500",
+                        "inverse-on-surface": "#dff4ff",
+                        "surface-dim": "#c7dde9",
+                        "on-background": "#071e27",
+                        "on-secondary-fixed-variant": "#00429c",
+                        "primary": "#005bbf",
+                        "outline": "#727785",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#cfe6f2",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "error-red": "#ea4335",
+                        "on-secondary-container": "#00337c",
+                        "border-subtle": "#dadce0",
+                        "on-tertiary-fixed": "#341100",
+                        "secondary": "#2b5bb5",
+                        "inverse-surface": "#1e333c",
+                        "error": "#ba1a1a",
+                        "success-green": "#34a853",
+                        "warning-amber": "#fbbc04",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "surface-container": "#dbf1fe",
+                        "secondary-container": "#759efd",
+                        "primary-container": "#1a73e8",
+                        "surface-container-low": "#e6f6ff",
+                        "tertiary": "#9e4300",
+                        "inverse-primary": "#adc7ff",
+                        "surface-gray": "#f8f9fa",
+                        "secondary-fixed-dim": "#b0c6ff",
+                        "on-tertiary-container": "#0e0200",
+                        "primary-fixed-dim": "#adc7ff",
+                        "primary-fixed": "#d8e2ff",
+                        "background": "#f3faff",
+                        "surface": "#f3faff",
+                        "surface-variant": "#cfe6f2",
+                        "secondary-fixed": "#d9e2ff",
+                        "on-primary-fixed-variant": "#004493",
+                        "surface-bright": "#f3faff",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcb",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#d5ecf8",
+                        "on-surface": "#071e27",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#ffffff",
+                        "surface-tint": "#005bc0",
+                        "outline-variant": "#c1c6d6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "260px",
+                        "margin-desktop": "32px",
+                        "gutter": "24px",
+                        "container-max-width": "1440px",
+                        "stack-gap": "12px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "display-lg": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "title-lg": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f3faff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Glassmorphism for specific UI layers */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .ai-glow {
+            box-shadow: 0 0 20px rgba(26, 115, 232, 0.15);
+            border: 1px solid rgba(26, 115, 232, 0.3);
+        }
+
+        /* Loading animation pulse */
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); }
+            80%, 100% { opacity: 0; }
+        }
+        .pulse-btn::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #1a73e8;
+            opacity: 0.2;
+            z-index: -1;
+            animation: pulse-ring 1.25s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<div class="flex h-screen w-full" id="app">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] flex flex-col z-50 bg-on-secondary-fixed text-primary-fixed border-r border-outline-variant shadow-sm">
+<div class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded flex items-center justify-center font-headline-md text-headline-md font-bold text-white">B</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-white leading-none">BidFlow AI</h1>
+<p class="font-label-md text-label-md text-surface-container-highest opacity-70">企业级投标管理</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-hide">
+<a class="flex items-center gap-3 px-4 py-3 text-surface-container-highest hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">folder_managed</span>
+<span class="font-label-md text-label-md">项目管理</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 border-l-4 border-primary text-primary-fixed-dim font-bold" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-md text-label-md">文档分析</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-surface-container-highest hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">合规检查</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-surface-container-highest hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">设置</span>
+</a>
+</nav>
+<div class="mt-auto px-4 pb-12 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-surface-container-highest hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-md text-label-md">个人中心</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-surface-container-highest hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">退出登录</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-[260px] flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar -->
+<header class="h-16 flex justify-between items-center px-margin-desktop bg-surface-container-lowest border-b border-border-subtle z-40">
+<div class="flex items-center gap-8">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-gray border-none rounded-lg font-body-md text-body-md focus:ring-2 focus:ring-primary/20 transition-all" placeholder="搜索项目、需求或文档..." type="text"/>
+</div>
+<div class="flex gap-6">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all" href="#">仪表盘</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all" href="#">最近编辑</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all" href="#">团队协作</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2">
+<button class="material-symbols-outlined p-2 text-outline hover:bg-surface-gray rounded-full">notifications</button>
+<button class="material-symbols-outlined p-2 text-outline hover:bg-surface-gray rounded-full">help_outline</button>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded-lg font-title-lg text-body-md hover:opacity-90 active:scale-95 transition-all">生成标书</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-border-subtle">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-6wvtbVMC1PmLDtO45mElE3c9CZfMobFwSWNHLc0R6X-tMyFYmK-SD-LdVDUnMtedktRzcwmjckWO-kobwdX-DfG4KBWwukPxZbjDgnFAhi8rtplC-ehZ6DVgE0WK7QjNzcI7w8OcPgrr1z8tcGgnMQurYV7Vmqv2_JadfbBcGY9uwNEYjQAJTX1mfFHIkg0Mgmq0waqS1I7FFfjNQn0z3FuXcOlK2jzYFwVqI4uzxLeePvFR2ymH"/>
+</div>
+</div>
+</header>
+<!-- Response Generator Content (Split Screen) -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Panel (Requirement Detail) - 40% -->
+<section class="w-[40%] bg-surface-container-low border-r border-border-subtle flex flex-col p-8 overflow-y-auto scrollbar-hide">
+<div class="mb-8">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">需求背景</h2>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-primary/10 text-primary font-label-md text-label-sm rounded-full">分类：技术规范</span>
+<span class="px-3 py-1 bg-error-container text-on-error-container font-label-md text-label-sm rounded-full">优先级：P0</span>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-warning-amber" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span class="font-label-md text-label-md text-on-surface-variant">当前状态：待AI生成草案</span>
+</div>
+</div>
+<div class="bg-white border border-border-subtle rounded-xl p-6 mb-8 shadow-sm">
+<h3 class="font-title-lg text-title-lg mb-4 text-on-surface">具体内容</h3>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                            供应商必须为所有静态和传输中的数据提供全面的数据加密策略。加密算法必须达到或超过 AES-256 标准。提供有关密钥管理生命周期的详细文档，包括生成、存储、轮换和撤销流程。
+                        </p>
+</div>
+<div class="mt-auto">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">source</span>
+<h3 class="font-title-lg text-title-lg text-on-surface">原始文档来源</h3>
+</div>
+<div class="bg-surface-container-highest/50 border border-border-subtle border-dashed rounded-xl p-4">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md text-primary bg-white px-2 py-0.5 rounded">RFP_Section_4.2.pdf</span>
+<span class="font-label-sm text-label-sm text-outline">第45页, 第12-18行</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant italic">
+                                "...安全标准要求任何第三方基础设施必须符合 NIST SP 800-53 控制，特别是关注 SC-28 的静态数据保护机制..."
+                            </p>
+</div>
+</div>
+</section>
+<!-- Right Panel (Response Workspace) - 60% -->
+<section class="w-[60%] bg-surface flex flex-col overflow-hidden relative">
+<!-- References Slider -->
+<div class="p-8 border-b border-border-subtle bg-white/50">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-title-lg text-title-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">database</span>
+                                检索到的素材
+                            </h3>
+<button class="text-primary font-label-md text-label-md hover:underline">管理知识库</button>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+<!-- Reference Card 1 -->
+<div class="min-w-[280px] bg-white border border-border-subtle rounded-lg p-4 shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 border-l-primary">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-sm text-label-sm font-bold text-on-surface truncate w-32">Security_Whitepaper.docx</span>
+<span class="text-[10px] bg-surface-container text-primary-fixed-dim px-1.5 rounded">匹配度 98%</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-3">BidFlow 利用行业标准的 AES-256 加密，为所有客户数据存储桶使用 AWS KMS...</p>
+<button class="w-full py-1.5 border border-border-subtle text-primary font-label-md text-label-sm rounded hover:bg-surface-gray">查看参考源</button>
+</div>
+<!-- Reference Card 2 -->
+<div class="min-w-[280px] bg-white border border-border-subtle rounded-lg p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-sm text-label-sm font-bold text-on-surface truncate w-32">Compliance_Audit_2023.pdf</span>
+<span class="text-[10px] bg-surface-container text-primary-fixed-dim px-1.5 rounded">匹配度 84%</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-3">密钥轮换策略每90天强制执行一次，并自动弃用旧版本密钥...</p>
+<button class="w-full py-1.5 border border-border-subtle text-primary font-label-md text-label-sm rounded hover:bg-surface-gray">查看参考源</button>
+</div>
+<!-- Reference Card 3 -->
+<div class="min-w-[280px] bg-white border border-border-subtle rounded-lg p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-sm text-label-sm font-bold text-on-surface truncate w-32">ISO_27001_Annex.pdf</span>
+<span class="text-[10px] bg-surface-container text-primary-fixed-dim px-1.5 rounded">匹配度 72%</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mb-3">针对人员离职等紧急情况的密钥撤销标准操作程序...</p>
+<button class="w-full py-1.5 border border-border-subtle text-primary font-label-md text-label-sm rounded hover:bg-surface-gray">查看参考源</button>
+</div>
+</div>
+</div>
+<!-- Editor Section -->
+<div class="flex-1 flex flex-col p-8 bg-surface-gray/30 overflow-y-auto relative">
+<!-- AI Generation Button (Overlay when empty) -->
+<div class="flex flex-col items-center justify-center space-y-6 py-20" id="generation-trigger">
+<button class="pulse-btn relative flex items-center gap-4 bg-primary text-white px-10 py-5 rounded-xl font-headline-md text-headline-md shadow-lg hover:shadow-primary/30 transition-all hover:-translate-y-1" onclick="startAIGeneration()">
+<span class="material-symbols-outlined text-3xl">smart_toy</span>
+                                生成AI应答草案
+                            </button>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm text-center">
+                                BidFlow 将分析您的知识库和需求背景，打造精准的应答草案。
+                            </p>
+</div>
+<!-- Loading State (Hidden by default) -->
+<div class="hidden flex flex-col items-center justify-center py-20 space-y-6" id="ai-loading">
+<div class="relative w-24 h-24">
+<div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+<div class="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary animate-pulse">psychology</span>
+</div>
+</div>
+<div class="text-center">
+<h4 class="font-title-lg text-title-lg text-primary mb-2">AI 正在思考中...</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">正在综合安全协议和合规数据</p>
+</div>
+</div>
+<!-- Generated Response Editor (Hidden by default) -->
+<div class="hidden flex flex-col h-full ai-glow bg-white rounded-2xl overflow-hidden shadow-xl" id="response-editor">
+<div class="bg-surface-container-low px-6 py-3 border-b border-border-subtle flex justify-between items-center">
+<div class="flex gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">format_bold</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">format_italic</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">format_list_bulleted</button>
+<div class="w-px h-6 bg-border-subtle"></div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" title="重新生成">refresh</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-success-green animate-pulse"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">生成内容（草案）- 模型 v4.2</span>
+</div>
+</div>
+<div class="flex-1 p-8 font-body-lg text-body-lg text-on-surface leading-loose overflow-y-auto">
+<p class="mb-4">BidFlow 采用多层数据保护策略。对于所有静态数据，我们利用 <span class="bg-primary/10 text-primary font-bold px-1 rounded">AES-256 加密</span> 标准，并通过我们的 FIPS 140-2 Level 3 硬件安全模块 (HSM) 进行管理<sup>[1]</sup>。这确保了即使在极少数物理硬件泄露的情况下，没有密钥的数据也无法访问。</p>
+<p class="mb-4">我们的密钥管理生命周期遵循严格的自动化流程：</p>
+<ul class="list-disc ml-6 mb-4 space-y-2">
+<li><strong>生成：</strong> 通过 AWS KMS HSM 进行高熵密钥生成。</li>
+<li><strong>轮换：</strong> 自动执行 90 天密钥轮换，并支持多密钥版本<sup>[2]</sup>。</li>
+<li><strong>撤销：</strong> 在紧急情况下，支持全平台 &lt;10ms 的快速撤销能力<sup>[3]</sup>。</li>
+</ul>
+<p>传输中的数据使用具有完全前向保密 (PFS) 的 TLS 1.3 进行保护，防止即使长期私钥被破解也能解密过去的通信。</p>
+<div class="mt-8">
+<button class="flex items-center gap-2 text-primary hover:bg-primary/5 px-4 py-2 rounded-lg border border-primary/20 transition-all text-body-md" onclick="startAIGeneration()">
+<span class="material-symbols-outlined">refresh</span>
+                                        重新生成草案
+                                    </button>
+</div>
+<div class="mt-8 pt-8 border-t border-border-subtle">
+<h5 class="font-label-md text-label-md text-outline mb-4">引证与证据</h5>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface-gray border border-border-subtle rounded text-[11px] font-bold text-on-surface-variant cursor-help">[1] Security_Whitepaper.docx (p.4)</span>
+<span class="px-2 py-1 bg-surface-gray border border-border-subtle rounded text-[11px] font-bold text-on-surface-variant cursor-help">[2] Compliance_Audit_2023.pdf (附件 B)</span>
+<span class="px-2 py-1 bg-surface-gray border border-border-subtle rounded text-[11px] font-bold text-on-surface-variant cursor-help">[3] ISO_27001_Annex.pdf (条款 9.4)</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<footer class="h-24 px-8 bg-white border-t border-border-subtle flex items-center justify-between z-10 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+<button class="flex items-center gap-2 font-title-lg text-body-md text-outline hover:text-on-surface transition-all">
+<span class="material-symbols-outlined">arrow_back</span>
+                            返回列表
+                        </button>
+<div class="flex gap-4">
+<button class="px-8 py-3 bg-white border border-outline text-on-surface-variant rounded-xl font-title-lg text-body-md hover:bg-surface-gray transition-all">
+                                舍弃
+                            </button>
+<button class="px-8 py-3 bg-white border border-primary text-primary rounded-xl font-title-lg text-body-md hover:bg-surface-gray transition-all">
+                                保存草案
+                            </button>
+<button class="px-8 py-3 bg-primary text-white rounded-xl font-title-lg text-body-md shadow-md hover:shadow-primary/30 active:scale-95 transition-all" onclick="handleSave()">
+                                保存并标记完成
+                            </button>
+</div>
+</footer>
+</section>
+</div>
+</main>
+<!-- Toast Notification (Simulated) -->
+<div class="fixed bottom-12 right-12 translate-y-20 opacity-0 bg-on-background text-white px-6 py-4 rounded-xl flex items-center gap-4 transition-all duration-500 z-[100] shadow-2xl" id="toast">
+<span class="material-symbols-outlined text-success-green" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<p class="font-bold font-title-lg text-body-md">应答保存成功</p>
+<p class="font-body-md text-label-sm opacity-70">需求 #SEC-001 已更新。</p>
+</div>
+</div>
+</div>
+<script>
+        function startAIGeneration() {
+            const trigger = document.getElementById('generation-trigger');
+            const loader = document.getElementById('ai-loading');
+            const editor = document.getElementById('response-editor');
+
+            // Transition: Hide trigger, Show loader
+            trigger.classList.add('hidden');
+            loader.classList.remove('hidden');
+            editor.classList.add('hidden');
+
+            // Mock API Latency
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                editor.classList.remove('hidden');
+                editor.classList.add('animate-in', 'fade-in', 'duration-1000');
+            }, 2800);
+        }
+
+        function handleSave() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 4000);
+        }
+
+        // Interactivity: Smooth scroll for knowledge base cards
+        document.querySelector('.overflow-x-auto').addEventListener('wheel', (evt) => {
+            evt.preventDefault();
+            document.querySelector('.overflow-x-auto').scrollLeft += evt.deltaY;
+        });
+    </script>
+</body></html>

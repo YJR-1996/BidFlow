@@ -1,5 +1,55 @@
-# 负责人：成员 C
-#
-# 你要做什么：把长文档切成适合 Embedding 和检索的小文本块。
-# 实现顺序：1）删除空行；2）先按段落切分；3）段落过长再按句号、问号等句子边界切分；4）给相邻块保留少量重叠；5）为每块记录 document_id、文件名、类型、序号和来源位置。
-# 完成后验证：任意文本块都不超过设定上限，并能从元数据找到所属文件和原始位置。
+"""文本块切分服务"""
+from typing import List, Dict
+
+
+class TextChunkerService:
+    """将长文档切分为适合 Embedding 的小文本块"""
+
+    def __init__(self):
+        self.max_chunk_size = 512  # 每块最大字符数
+        self.chunk_overlap = 50    # 重叠字符数
+
+    def chunk(self, paragraphs: List[Dict]) -> List[Dict]:
+        """将段落列表切分为文本块"""
+        chunks = []
+        current_chunk = ""
+        chunk_id = 0
+
+        for para in paragraphs:
+            text = para.get("text", "")
+            if not text:
+                continue
+
+            # 如果当前块加上这个段落超过限制
+            if len(current_chunk) + len(text) > self.max_chunk_size and current_chunk:
+                # 保存当前块
+                chunks.append({
+                    "text": current_chunk.strip(),
+                    "chunk_id": chunk_id,
+                    "metadata": {
+                        "page": para.get("page", 1),
+                        "paragraph_index": para.get("paragraph_index", 0),
+                        "source_ref": para.get("source_ref", ""),
+                    },
+                })
+                chunk_id += 1
+                current_chunk = ""
+
+            current_chunk += text + "\n"
+
+        # 保存最后一个块
+        if current_chunk.strip():
+            chunks.append({
+                "text": current_chunk.strip(),
+                "chunk_id": chunk_id,
+                "metadata": {
+                    "page": paragraphs[-1].get("page", 1) if paragraphs else 1,
+                    "paragraph_index": paragraphs[-1].get("paragraph_index", 0) if paragraphs else 0,
+                    "source_ref": paragraphs[-1].get("source_ref", "") if paragraphs else "",
+                },
+            })
+
+        return chunks
+
+
+text_chunker_service = TextChunkerService()

@@ -38,7 +38,7 @@ class ProjectDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    owner_id: int
+    owner_id: str
     name: str
     tenderer: Optional[str]
     deadline: Optional[datetime]

@@ -24,5 +24,6 @@ class User(Base):
         DateTime, server_default=func.now(), onupdate=func.now()
     )
 
-    # 未来关联：用户的项目、上传的文档等
-    # projects: Mapped[list["BidProject"]] = relationship(back_populates="owner")
+    # 关联：用户的项目、上传的文档等
+    bid_projects: Mapped[list["BidProject"]] = relationship(back_populates="owner")
+    company_documents: Mapped[list["CompanyDocument"]] = relationship(back_populates="owner")

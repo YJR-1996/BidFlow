@@ -9,7 +9,7 @@ from app.models.requirement import Requirement
 from app.models.compliance_issue import ComplianceIssue
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectListItem, ProjectDetail
 from app.schemas.common import ApiResponse
-from app.api.deps import get_current_user, get_project_or_404
+from app.api.deps import get_current_user, get_project_or_404_sync
 
 router = APIRouter()
 
@@ -74,14 +74,14 @@ def create_project(
 
 
 @router.get("/{project_id}", response_model=ApiResponse[ProjectDetail])
-def get_project(project: BidProject = Depends(get_project_or_404)):
+def get_project(project: BidProject = Depends(get_project_or_404_sync)):
     return ApiResponse(data=project)
 
 
 @router.patch("/{project_id}", response_model=ApiResponse[ProjectDetail])
 def update_project(
     request: ProjectUpdate,
-    project: BidProject = Depends(get_project_or_404),
+    project: BidProject = Depends(get_project_or_404_sync),
     db: Session = Depends(get_db),
 ):
     update_data = request.model_dump(exclude_unset=True)
@@ -94,7 +94,7 @@ def update_project(
 
 @router.delete("/{project_id}", response_model=ApiResponse[dict])
 def delete_project(
-    project: BidProject = Depends(get_project_or_404),
+    project: BidProject = Depends(get_project_or_404_sync),
     db: Session = Depends(get_db),
 ):
     db.delete(project)

@@ -32,3 +32,18 @@ class SourceReference(BaseModel):
     filename: str
     source_ref: str
     score: Optional[float] = None
+
+
+# Payload schemas used by ResponseController
+class DraftResponsePayload(BaseModel):
+    """响应草稿 Payload（用于 Controller 内部数据传输）"""
+    content: str
+    source_refs: Optional[list] = None
+    status: str
+    message: str = ""
+
+
+class UpdateResponsePayload(BaseModel):
+    """更新响应 Payload（用于 Controller 内部数据传输）"""
+    content: Optional[str] = None
+    status: Optional[str] = None

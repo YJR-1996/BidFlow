@@ -1,1 +1,26 @@
-// 负责人：Codex。步骤：配置 Vue 插件、src 别名、开发端口和 /api 到 FastAPI 的代理。验收：前端调用 /api 时无跨域错误且可切换后端地址。
+// Vite configuration for BidFlow frontend
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { resolve } from 'path'
+
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
+    }
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      }
+    }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'static'
+  }
+})

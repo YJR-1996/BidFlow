@@ -3,11 +3,13 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.core.exceptions import ForbiddenException, NotFoundException, http_exception
 from app.core.security import decode_access_token
-from app.db.session import get_session
+from app.db.session import get_db, get_session
 from app.models.user import User
+from app.models.bid_project import BidProject
 
 
 async def get_current_user(
@@ -54,3 +56,32 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise http_exception(ForbiddenException("User is inactive"))
     return current_user
+
+
+async def get_project_or_404(
+    project_id,  # FastAPI 从 URL 路径参数自动解析
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> BidProject:
+    """获取项目或返回 404（异步版本，用于使用 get_session 的路由）"""
+    stmt = select(BidProject).where(BidProject.id == project_id, BidProject.owner_id == current_user.id)
+    result = await session.execute(stmt)
+    project = result.scalar_one_or_none()
+    if not project:
+        raise http_exception(NotFoundException("项目不存在或无权限"))
+    return project
+
+
+def get_project_or_404_sync(
+    project_id,  # FastAPI 从 URL 路径参数自动解析
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> BidProject:
+    """获取项目或返回 404（同步版本，用于使用 get_db 的路由）"""
+    project = db.query(BidProject).filter(
+        BidProject.id == project_id,
+        BidProject.owner_id == current_user.id,
+    ).first()
+    if not project:
+        raise http_exception(NotFoundException("项目不存在或无权限"))
+    return project

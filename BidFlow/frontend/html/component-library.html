@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BidFlow AI | Component Library</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Manrope:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for enterprise feel */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c1c6d6; }
+
+        @keyframes pulse-ai {
+            0% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(0, 91, 191, 0.4); }
+            70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 15px rgba(0, 91, 191, 0); }
+            100% { transform: scale(0.95); opacity: 0.5; box-shadow: 0 0 0 0 rgba(0, 91, 191, 0); }
+        }
+        .ai-pulse-ring {
+            animation: pulse-ai 2s infinite ease-in-out;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c1c6d6",
+                        "primary": "#005bbf",
+                        "on-tertiary-fixed": "#341100",
+                        "border-subtle": "#dadce0",
+                        "inverse-on-surface": "#dff4ff",
+                        "inverse-surface": "#1e333c",
+                        "surface-tint": "#005bc0",
+                        "on-surface-variant": "#414754",
+                        "surface-gray": "#f8f9fa",
+                        "on-primary": "#ffffff",
+                        "error-red": "#ea4335",
+                        "warning-amber": "#fbbc04",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "background": "#f3faff",
+                        "on-tertiary-container": "#0e0200",
+                        "secondary-container": "#759efd",
+                        "on-secondary-fixed-variant": "#00429c",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#d9e2ff",
+                        "error": "#ba1a1a",
+                        "on-background": "#071e27",
+                        "surface-bright": "#f3faff",
+                        "primary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#001945",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#c55500",
+                        "surface-container": "#dbf1fe",
+                        "secondary": "#2b5bb5",
+                        "surface-variant": "#cfe6f2",
+                        "surface-container-low": "#e6f6ff",
+                        "primary-container": "#1a73e8",
+                        "on-secondary": "#ffffff",
+                        "success-green": "#34a853",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#d5ecf8",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-secondary-container": "#00337c",
+                        "on-primary-fixed-variant": "#004493",
+                        "inverse-primary": "#adc7ff",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "surface-container-highest": "#cfe6f2",
+                        "surface-dim": "#c7dde9",
+                        "on-primary-fixed": "#001a41",
+                        "on-surface": "#071e27",
+                        "surface": "#f3faff",
+                        "secondary-fixed-dim": "#b0c6ff",
+                        "primary-fixed-dim": "#adc7ff",
+                        "outline": "#727785",
+                        "tertiary": "#9e4300",
+                        "on-primary-container": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "stack-gap": "12px",
+                        "container-max-width": "1440px",
+                        "margin-desktop": "32px",
+                        "sidebar-width": "260px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-gray font-body-md text-on-surface selection:bg-primary/20">
+<!-- AppLayout Sidebar -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 bg-inverse-surface border-r border-outline-variant/20 flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="font-display-lg text-[24px] font-bold text-primary-fixed-dim">BidFlow AI</h1>
+<p class="font-label-sm text-surface-variant/60 tracking-wider">Enterprise Procurement</p>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<!-- Navigation Items Mapping from JSON -->
+<a class="flex items-center gap-3 px-4 py-3 text-primary-fixed-dim font-bold bg-primary-fixed-dim/10 rounded-lg transition-transform scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="folder_managed">folder_managed</span>
+<span class="font-body-md">Project Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-on-surface-variant/20 rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary-fixed-dim" data-icon="analytics">analytics</span>
+<span class="font-body-md text-surface-variant">Company Documents</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-on-surface-variant/20 rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary-fixed-dim" data-icon="fact_check">fact_check</span>
+<span class="font-body-md text-surface-variant">Risk Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-on-surface-variant/20 rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary-fixed-dim" data-icon="settings">settings</span>
+<span class="font-body-md text-surface-variant">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-4">
+<button class="w-full bg-primary-container text-on-primary py-3 px-4 rounded-lg font-title-lg text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Project
+            </button>
+</div>
+</aside>
+<!-- Main Shell Content -->
+<main class="ml-[260px] min-h-screen">
+<!-- TopNavBar Header -->
+<header class="h-[64px] sticky top-0 right-0 bg-surface border-b border-outline-variant flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-body-md" placeholder="Search components, documents..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right">
+<p class="font-body-md font-bold text-on-surface group-hover:text-primary transition-colors">Alex Morgan</p>
+<p class="font-label-sm text-outline">Lead Bid Manager</p>
+</div>
+<img class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a corporate executive in a modern workspace, shot with shallow depth of field. Soft, neutral office lighting illuminates his face, conveying a sense of reliability and leadership. The style is clean, corporate photography with high-end digital clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0ExNlSNkShhmwZNiXjwcH003FBI04CCY21BNjrDHbxS2Y46EwNBwCvF5LwjDD3aVpWgZfA2LrI1wFkbKy3U9J59q3irrQ6aySxAKXg7m2j805xtZerq7-gf05QTJ99frwY3UYynLx8nmvzJr2RR87Gr1nkQyfvaTDPXLN7hRwyxCMbtVQcRGbY3eYRENj1ukda1tqs1Hw2mXbtGmymQ8ulY71U_wQuq6BO1778XOC7V9gjkNp8KOO"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="max-w-[1440px] mx-auto p-margin-desktop space-y-gutter">
+<!-- Breadcrumb Section -->
+<div class="flex items-center gap-2">
+<a class="text-outline hover:text-primary transition-colors font-body-md" href="#">Home</a>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="chevron_right">chevron_right</span>
+<a class="text-outline hover:text-primary transition-colors font-body-md" href="#">Project Management</a>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="chevron_right">chevron_right</span>
+<span class="text-primary font-bold font-body-md underline decoration-2 underline-offset-4">New Project</span>
+</div>
+<!-- Dashboard Title -->
+<div class="mb-8">
+<h2 class="font-headline-lg text-on-surface">Design System Library</h2>
+<p class="text-on-surface-variant font-body-lg">Brand anchors and core UI components for BidFlow platform development.</p>
+</div>
+<!-- Bento Grid of Components -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Status Tags Section -->
+<div class="col-span-12 lg:col-span-4 bg-white border border-border-subtle p-6 rounded-lg shadow-sm">
+<h3 class="font-title-lg text-on-surface mb-6 border-b border-border-subtle pb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="label">label</span>
+                        StatusTag Examples
+                    </h3>
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded">
+<span class="font-label-md">Project Status</span>
+<span class="px-3 py-1 bg-success-green/10 text-success-green font-label-sm rounded-full border border-success-green/20">Completed</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded">
+<span class="font-label-md">Audit Review</span>
+<span class="px-3 py-1 bg-warning-amber/10 text-warning-amber font-label-sm rounded-full border border-warning-amber/20">Pending</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded">
+<span class="font-label-md">Compliance Score</span>
+<span class="px-3 py-1 bg-error-red/10 text-error-red font-label-sm rounded-full border border-error-red/20">Risk</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded">
+<span class="font-label-md">AI Drafting</span>
+<span class="px-3 py-1 bg-primary/10 text-primary font-label-sm rounded-full border border-primary/20">In-Progress</span>
+</div>
+</div>
+</div>
+<!-- Loading Spinner Section -->
+<div class="col-span-12 lg:col-span-4 bg-white border border-border-subtle p-6 rounded-lg shadow-sm relative overflow-hidden group">
+<!-- Subtle pattern background for depth -->
+<div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#005bbf 0.5px, transparent 0.5px); background-size: 16px 16px;"></div>
+<h3 class="font-title-lg text-on-surface mb-6 border-b border-border-subtle pb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="progress_activity">progress_activity</span>
+                        LoadingSpinner
+                    </h3>
+<div class="h-[200px] flex flex-col items-center justify-center gap-6">
+<div class="relative">
+<!-- Inner Circle -->
+<div class="w-16 h-16 rounded-full border-4 border-surface-container border-t-primary animate-spin"></div>
+<!-- AI Pulse Core -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-6 h-6 bg-primary rounded-full ai-pulse-ring flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-white" data-icon="bolt">bolt</span>
+</div>
+</div>
+</div>
+<div class="text-center">
+<p class="font-label-md text-primary animate-pulse tracking-widest">AI THINKING</p>
+<p class="font-body-md text-on-surface-variant mt-1 italic">Analyzing document context...</p>
+</div>
+</div>
+</div>
+<!-- Confirm Dialog Section -->
+<div class="col-span-12 lg:col-span-4 bg-white border border-border-subtle p-6 rounded-lg shadow-sm">
+<h3 class="font-title-lg text-on-surface mb-6 border-b border-border-subtle pb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="event_note">event_note</span>
+                        ConfirmDialog Mockup
+                    </h3>
+<div class="bg-surface-gray p-6 rounded-xl border border-outline-variant shadow-lg max-w-[320px] mx-auto">
+<div class="flex items-start gap-4 mb-4">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+</div>
+<div>
+<h4 class="font-title-lg text-base">Discard Bid Draft?</h4>
+<p class="text-body-md text-on-surface-variant mt-1 leading-tight">This action cannot be undone. All AI-generated suggestions will be lost.</p>
+</div>
+</div>
+<div class="flex justify-end gap-3 pt-2">
+<button class="px-4 py-2 text-on-surface-variant font-label-md hover:bg-surface-container-high rounded transition-colors">Cancel</button>
+<button class="px-4 py-2 bg-error text-white font-label-md rounded shadow-sm hover:opacity-90">Confirm</button>
+</div>
+</div>
+</div>
+<!-- AI Document Assistant Preview (Extra context to show full page usage) -->
+<div class="col-span-12 bg-white border border-border-subtle p-8 rounded-lg shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="font-headline-md text-on-surface">Interactive AI Shell</h3>
+<p class="text-on-surface-variant font-body-md">The unified canvas for bid orchestration and analysis.</p>
+</div>
+<div class="flex gap-4">
+<button class="border border-primary text-primary px-6 py-2 rounded-lg font-label-md hover:bg-primary/5 transition-all">Save Workspace</button>
+<button class="bg-primary text-white px-6 py-2 rounded-lg font-label-md shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="smart_toy">smart_toy</span>
+                                Generate Draft
+                            </button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="md:col-span-2 aspect-[16/9] bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-4 py-2 border-b border-border-subtle flex justify-between items-center">
+<span class="font-label-md text-xs uppercase tracking-tighter opacity-60">Editor: Bid_Draft_v2.docx</span>
+<div class="flex gap-2">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+</div>
+<div class="flex-1 p-8 font-body-lg text-on-surface-variant/80 leading-relaxed space-y-6">
+<div class="h-4 bg-surface-container-high rounded w-3/4"></div>
+<div class="h-4 bg-surface-container-high rounded w-full"></div>
+<div class="h-4 bg-surface-container-high rounded w-5/6"></div>
+<div class="h-4 bg-surface-container-high rounded w-2/3"></div>
+<div class="p-6 bg-primary-container/5 border border-primary/20 rounded-lg relative">
+<div class="absolute -left-2 top-4 w-1 h-12 bg-primary rounded-full"></div>
+<span class="font-label-sm text-primary mb-2 block uppercase">AI Suggestion</span>
+<p class="text-on-surface font-body-md">Refine the executive summary to emphasize sustainable procurement goals. The current draft lacks specific ESG metrics common in Tier 1 enterprise bids.</p>
+<div class="mt-4 flex gap-3">
+<button class="text-primary font-label-sm flex items-center gap-1">Apply Suggestion <span class="material-symbols-outlined text-[14px]" data-icon="auto_awesome">auto_awesome</span></button>
+<button class="text-on-surface-variant font-label-sm">Ignore</button>
+</div>
+</div>
+<div class="h-4 bg-surface-container-high rounded w-full"></div>
+<div class="h-4 bg-surface-container-high rounded w-4/5"></div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="bg-surface p-6 rounded-xl border border-border-subtle">
+<h4 class="font-label-md text-primary mb-4">COMPLIANCE RADAR</h4>
+<div class="space-y-4">
+<div class="space-y-1">
+<div class="flex justify-between text-xs font-label-sm">
+<span>Technical Req.</span>
+<span>92%</span>
+</div>
+<div class="w-full h-1.5 bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-success-green w-[92%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-xs font-label-sm">
+<span>Financial Terms</span>
+<span>45%</span>
+</div>
+<div class="w-full h-1.5 bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-error-red w-[45%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-xs font-label-sm">
+<span>Delivery Timeline</span>
+<span>78%</span>
+</div>
+<div class="w-full h-1.5 bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-warning-amber w-[78%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-inverse-surface text-white p-6 rounded-xl relative overflow-hidden">
+<div class="relative z-10">
+<h4 class="font-headline-md text-lg mb-2">Ready to submit?</h4>
+<p class="font-body-md text-surface-variant/70 mb-4">AI has detected 2 missing certifications for this specific RFP category.</p>
+<button class="w-full bg-primary-fixed-dim text-on-primary-fixed py-2 rounded font-label-md hover:bg-white transition-colors">Review Checklist</button>
+</div>
+<!-- Background ambient glow -->
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/20 blur-3xl rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions and Toast logic
+        const sidebarItems = document.querySelectorAll('aside nav a');
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                sidebarItems.forEach(i => {
+                    i.classList.remove('text-primary-fixed-dim', 'font-bold', 'bg-primary-fixed-dim/10', 'scale-[0.98]');
+                    i.classList.add('text-on-surface-variant');
+                });
+                item.classList.add('text-primary-fixed-dim', 'font-bold', 'bg-primary-fixed-dim/10', 'scale-[0.98]');
+                item.classList.remove('text-on-surface-variant');
+            });
+        });
+
+        // Toggle focus on search
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+        });
+    </script>
+</body></html>

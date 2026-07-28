@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, String
 from sqlalchemy.orm import relationship
 
-from app.db.session import Base
+from app.db.base import Base
 
 
 class Response(Base):
@@ -18,3 +18,7 @@ class Response(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     requirement = relationship("Requirement", back_populates="responses")
+
+
+# BidResponse 是 Response 的别名，兼容不同文件中的导入
+BidResponse = Response

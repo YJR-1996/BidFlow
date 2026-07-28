@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>新建招标项目 - BidFlow AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#0e0200",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "surface": "#f3faff",
+                        "success-green": "#34a853",
+                        "surface-bright": "#f3faff",
+                        "on-surface": "#071e27",
+                        "on-surface-variant": "#414754",
+                        "tertiary-container": "#c55500",
+                        "on-secondary-fixed-variant": "#00429c",
+                        "primary": "#005bbf",
+                        "on-primary-fixed": "#001a41",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#1e333c",
+                        "surface-tint": "#005bc0",
+                        "outline-variant": "#c1c6d6",
+                        "secondary-container": "#759efd",
+                        "inverse-on-surface": "#dff4ff",
+                        "primary-fixed-dim": "#adc7ff",
+                        "primary-container": "#1a73e8",
+                        "on-background": "#071e27",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#d9e2ff",
+                        "border-subtle": "#dadce0",
+                        "outline": "#727785",
+                        "secondary-fixed-dim": "#b0c6ff",
+                        "on-primary-fixed-variant": "#004493",
+                        "surface-container-low": "#e6f6ff",
+                        "on-primary": "#ffffff",
+                        "warning-amber": "#fbbc04",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "inverse-primary": "#adc7ff",
+                        "surface-container": "#dbf1fe",
+                        "on-secondary-fixed": "#001945",
+                        "surface-container-highest": "#cfe6f2",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#2b5bb5",
+                        "error-red": "#ea4335",
+                        "tertiary": "#9e4300",
+                        "error-container": "#ffdad6",
+                        "surface-gray": "#f8f9fa",
+                        "surface-container-high": "#d5ecf8",
+                        "on-tertiary-fixed": "#341100",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#c7dde9",
+                        "on-secondary-container": "#00337c",
+                        "surface-variant": "#cfe6f2",
+                        "on-secondary": "#ffffff",
+                        "background": "#f3faff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max-width": "1440px",
+                        "margin-desktop": "32px",
+                        "stack-gap": "12px",
+                        "sidebar-width": "260px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "display-lg": ["Manrope"],
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .step-active::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #005bbf;
+            border-radius: 0 4px 4px 0;
+        }
+        .ai-glow {
+            box-shadow: inset 0 0 15px rgba(26, 115, 232, 0.05);
+            background-color: rgba(26, 115, 232, 0.02);
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #1a73e8 !important;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface selection:bg-primary-container selection:text-white">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface dark:bg-inverse-surface border-r border-outline-variant dark:border-outline shadow-sm flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight">BidFlow AI</h1>
+<p class="text-[11px] font-medium text-on-surface-variant uppercase tracking-widest mt-1">智能编审平台</p>
+</div>
+<nav class="flex-grow space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ease-in-out text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-on-surface-variant/10" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">首页概览</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ease-in-out text-primary dark:text-inverse-primary font-bold bg-primary-container/10" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-body-md text-body-md">智能编制</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ease-in-out text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-on-surface-variant/10" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-body-md text-body-md">合规核查</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ease-in-out text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-on-surface-variant/10" href="#">
+<span class="material-symbols-outlined" data-icon="archive">archive</span>
+<span class="font-body-md text-body-md">项目归档</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ease-in-out text-secondary dark:text-secondary-fixed-dim hover:bg-surface-variant dark:hover:bg-on-surface-variant/10" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">系统设置</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional corporate headshot of a business user, high-quality photography, clean background, focused and reliable expression, modern business attire, soft studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYCiAx1mrYICY_l8E7sxmS6xLmrNUH5Fhw930RdCix6XGK4AocczpfHnde9HpLgcvrrFj9PlGTXsq99dpnwjvHFzNFzArkKVl4vR1zkw2ndehbxrc-zrCgdU02dQxlicPiPcFaxSfWSTSdaD7ScN5hNLXjmZFRiVvNRosbLH-sFzeyCDKw08F_pRB_bj1wPziVCKVCHgEEkfoVp-sCMzQva9uguKTlJ-Su4hfmTPAbDVQsdFpoCDq4"/>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-bold text-on-surface">高级项目经理</span>
+<span class="text-label-sm text-on-surface-variant">Procurement Dept.</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Authority: JSON) -->
+<header class="fixed top-0 right-0 w-[calc(100%-260px)] h-16 bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-md border-b border-outline-variant dark:border-outline flex items-center justify-between px-8 z-40">
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="absolute inset-y-0 left-3 flex items-center text-outline pointer-events-none group-focus-within:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="search">search</span>
+</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-border-subtle rounded-lg text-body-md w-80 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="搜索项目、文档或规范..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<button class="flex items-center gap-2 px-3 py-1.5 hover:bg-surface-variant rounded-lg transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-title-sm font-medium">个人中心</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] pt-24 pb-12 px-12 min-h-screen">
+<div class="max-w-[1440px] mx-auto grid grid-cols-12 gap-8">
+<!-- Left: Form Area (8 cols) -->
+<div class="col-span-8">
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl shadow-sm p-8">
+<header class="mb-8">
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">新建招标项目</h2>
+<p class="text-body-lg text-on-surface-variant mt-2">请填写项目基本信息，AI将根据这些信息辅助您进行文件编制与核查</p>
+</header>
+<form class="space-y-6" id="projectForm">
+<!-- Project Name -->
+<div class="space-y-2">
+<label class="flex items-center gap-1 text-body-md font-bold text-on-surface">
+                                项目名称 <span class="text-error">*</span>
+</label>
+<input class="w-full px-4 py-3 bg-white border border-border-subtle rounded-lg focus:border-primary transition-all text-body-md" name="projectName" placeholder="请输入招标项目全称" required="" type="text"/>
+<p class="text-label-sm text-error hidden" id="projectName-error">项目名称为必填项</p>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<!-- Bidding Agency -->
+<div class="space-y-2">
+<label class="flex items-center gap-1 text-body-md font-bold text-on-surface">
+                                    招标单位 <span class="text-error">*</span>
+</label>
+<input class="w-full px-4 py-3 bg-white border border-border-subtle rounded-lg focus:border-primary transition-all text-body-md" name="agency" placeholder="请输入招标人名称" required="" type="text"/>
+<p class="text-label-sm text-error hidden" id="agency-error">招标单位为必填项</p>
+</div>
+<!-- Deadline -->
+<div class="space-y-2">
+<label class="flex items-center gap-1 text-body-md font-bold text-on-surface">
+                                    截止日期 <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full px-4 py-3 bg-white border border-border-subtle rounded-lg focus:border-primary transition-all text-body-md appearance-none" name="deadline" required="" type="date"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline pointer-events-none" data-icon="calendar_today">calendar_today</span>
+</div>
+<p class="text-label-sm text-error hidden" id="deadline-error">截止日期为必填项</p>
+</div>
+</div>
+<!-- Budget -->
+<div class="space-y-2">
+<label class="flex items-center gap-1 text-body-md font-bold text-on-surface">
+                                预算金额 (万元)
+                            </label>
+<div class="relative">
+<input class="w-full px-4 py-3 bg-white border border-border-subtle rounded-lg focus:border-primary transition-all text-body-md" name="budget" placeholder="请输入预计金额" type="number"/>
+<div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+<span class="material-symbols-outlined text-xs text-outline cursor-pointer hover:text-primary" data-icon="arrow_drop_up">arrow_drop_up</span>
+<span class="material-symbols-outlined text-xs text-outline cursor-pointer hover:text-primary" data-icon="arrow_drop_down">arrow_drop_down</span>
+</div>
+</div>
+</div>
+<!-- Description -->
+<div class="space-y-2">
+<label class="flex items-center gap-1 text-body-md font-bold text-on-surface">
+                                项目描述
+                            </label>
+<textarea class="w-full px-4 py-3 bg-white border border-border-subtle rounded-lg focus:border-primary transition-all text-body-md resize-none" name="description" placeholder="请输入项目背景及核心需求..." rows="4"></textarea>
+<div class="flex justify-between items-center px-1">
+<span class="text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="auto_awesome">auto_awesome</span>
+                                    AI 将通过此描述优化文件生成质量
+                                </span>
+<span class="text-label-sm text-on-surface-variant">0 / 500</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4 pt-6 border-t border-outline-variant mt-8">
+<button class="flex-1 bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-secondary transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]" id="submitBtn" type="submit">
+<span id="btnText">提交项目</span>
+<span class="hidden animate-spin material-symbols-outlined" data-icon="progress_activity" id="btnLoading">progress_activity</span>
+</button>
+<button class="px-8 py-3 bg-white border border-border-subtle text-on-surface font-medium rounded-lg hover:bg-surface-container transition-all" type="button">
+                                取消
+                            </button>
+</div>
+</form>
+</div>
+</div>
+<!-- Right: Info/Process Card (4 cols) -->
+<div class="col-span-4 space-y-6">
+<!-- AI Assistant Info Card -->
+<div class="bg-primary/5 border border-primary-container/20 rounded-xl p-6 ai-glow relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h3 class="text-title-lg font-bold text-primary">BidFlow AI 智囊</h3>
+<p class="text-label-sm text-on-surface-variant">实时指导与生成建议</p>
+</div>
+</div>
+<p class="text-body-md text-on-surface mb-4">创建项目后，系统将立即开启：</p>
+<ul class="space-y-3">
+<li class="flex items-start gap-2 text-body-md">
+<span class="material-symbols-outlined text-success-green text-sm mt-1" data-icon="check_circle">check_circle</span>
+<span><b>模版匹配：</b>基于行业自动推荐招标模版</span>
+</li>
+<li class="flex items-start gap-2 text-body-md">
+<span class="material-symbols-outlined text-success-green text-sm mt-1" data-icon="check_circle">check_circle</span>
+<span><b>合规预警：</b>自动对照最新行业法律法规</span>
+</li>
+<li class="flex items-start gap-2 text-body-md">
+<span class="material-symbols-outlined text-success-green text-sm mt-1" data-icon="check_circle">check_circle</span>
+<span><b>进度追踪：</b>多维度跟进招标生命周期</span>
+</li>
+</ul>
+</div>
+<!-- Subtle background decoration -->
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-9xl text-primary" data-icon="contract">contract</span>
+</div>
+</div>
+<!-- Step Guide Card -->
+<div class="bg-white border border-border-subtle rounded-xl p-6 shadow-sm">
+<h3 class="text-title-lg font-bold text-on-surface mb-6">编制流程图</h3>
+<div class="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-outline-variant">
+<div class="relative flex gap-4 step-active">
+<div class="z-10 w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-bold ring-4 ring-white">1</div>
+<div class="flex-grow">
+<h4 class="text-body-md font-bold text-on-surface">填写项目概况</h4>
+<p class="text-label-sm text-on-surface-variant mt-0.5">录入基础信息，确定项目基调</p>
+</div>
+</div>
+<div class="relative flex gap-4">
+<div class="z-10 w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center text-[10px] text-on-surface-variant font-bold ring-4 ring-white">2</div>
+<div class="flex-grow">
+<h4 class="text-body-md font-medium text-on-surface-variant">上传参考资料</h4>
+<p class="text-label-sm text-on-surface-variant mt-0.5">提供过往案例或技术规格书</p>
+</div>
+</div>
+<div class="relative flex gap-4">
+<div class="z-10 w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center text-[10px] text-on-surface-variant font-bold ring-4 ring-white">3</div>
+<div class="flex-grow">
+<h4 class="text-body-md font-medium text-on-surface-variant">AI 自动生成</h4>
+<p class="text-label-sm text-on-surface-variant mt-0.5">生成技术需求、评分标准及合同</p>
+</div>
+</div>
+<div class="relative flex gap-4">
+<div class="z-10 w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center text-[10px] text-on-surface-variant font-bold ring-4 ring-white">4</div>
+<div class="flex-grow">
+<h4 class="text-body-md font-medium text-on-surface-variant">专家人工核查</h4>
+<p class="text-label-sm text-on-surface-variant mt-0.5">在线协作，完成最终定稿</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Info Card -->
+<div class="bg-surface-gray border border-border-subtle rounded-xl p-5">
+<div class="flex items-center gap-2 mb-3 text-on-surface">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="info">info</span>
+<span class="text-label-md font-bold">注意事项</span>
+</div>
+<p class="text-label-sm text-on-surface-variant leading-relaxed">
+                        预算金额建议录入准确数值，以便 AI 自动计算并匹配最适合的招标方式（公开招标、邀请招标或竞争性谈判等）。
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<script>
+        document.getElementById('projectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            let hasError = false;
+            const requiredFields = ['projectName', 'agency', 'deadline'];
+            
+            requiredFields.forEach(field => {
+                const input = document.querySelector(`[name="${field}"]`);
+                const error = document.getElementById(`${field}-error`);
+                
+                if (!input.value.trim()) {
+                    input.classList.add('border-error');
+                    error.classList.remove('hidden');
+                    hasError = true;
+                } else {
+                    input.classList.remove('border-error');
+                    error.classList.add('hidden');
+                }
+            });
+
+            if (!hasError) {
+                const btn = document.getElementById('submitBtn');
+                const text = document.getElementById('btnText');
+                const loading = document.getElementById('btnLoading');
+
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                text.innerText = "正在创建...";
+                loading.classList.remove('hidden');
+
+                // Simulate API call
+                setTimeout(() => {
+                    alert('项目已成功创建！即将跳转至编制页面。');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    text.innerText = "提交项目";
+                    loading.classList.add('hidden');
+                }, 1500);
+            }
+        });
+
+        // Add real-time validation on input
+        document.querySelectorAll('input[required]').forEach(input => {
+            input.addEventListener('input', function() {
+                const error = document.getElementById(`${this.name}-error`);
+                if (this.value.trim()) {
+                    this.classList.remove('border-error');
+                    if (error) error.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body></html>

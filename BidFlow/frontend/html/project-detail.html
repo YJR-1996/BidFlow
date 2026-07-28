@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BidFlow - 项目详情</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed-dim": "#ffb691",
+                    "error-red": "#ea4335",
+                    "inverse-primary": "#adc7ff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed": "#ffdbcb",
+                    "on-error": "#ffffff",
+                    "on-secondary-fixed-variant": "#00429c",
+                    "on-tertiary-container": "#0e0200",
+                    "tertiary": "#9e4300",
+                    "secondary-fixed-dim": "#b0c6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "surface-tint": "#005bc0",
+                    "on-tertiary-fixed": "#341100",
+                    "inverse-on-surface": "#dff4ff",
+                    "on-surface-variant": "#414754",
+                    "on-primary-fixed": "#001a41",
+                    "on-tertiary": "#ffffff",
+                    "surface-gray": "#f8f9fa",
+                    "success-green": "#34a853",
+                    "surface-variant": "#cfe6f2",
+                    "on-surface": "#071e27",
+                    "primary": "#005bbf",
+                    "outline": "#727785",
+                    "surface-container-high": "#d5ecf8",
+                    "surface": "#f3faff",
+                    "surface-bright": "#f3faff",
+                    "on-secondary-container": "#00337c",
+                    "error": "#ba1a1a",
+                    "surface-dim": "#c7dde9",
+                    "primary-fixed-dim": "#adc7ff",
+                    "surface-container-low": "#e6f6ff",
+                    "secondary": "#2b5bb5",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed": "#d9e2ff",
+                    "on-background": "#071e27",
+                    "inverse-surface": "#1e333c",
+                    "surface-container": "#dbf1fe",
+                    "background": "#f3faff",
+                    "border-subtle": "#dadce0",
+                    "outline-variant": "#c1c6d6",
+                    "on-tertiary-fixed-variant": "#783100",
+                    "on-secondary-fixed": "#001945",
+                    "tertiary-container": "#c55500",
+                    "warning-amber": "#fbbc04",
+                    "on-primary-fixed-variant": "#004493",
+                    "on-primary-container": "#ffffff",
+                    "surface-container-highest": "#cfe6f2",
+                    "secondary-container": "#759efd",
+                    "primary-container": "#1a73e8",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "margin-desktop": "32px",
+                    "stack-gap": "12px",
+                    "gutter": "24px",
+                    "sidebar-width": "260px",
+                    "container-max-width": "1440px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["JetBrains Mono"],
+                    "display-lg": ["Manrope"],
+                    "title-lg": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .active-tab { border-bottom: 2px solid #005bbf; color: #005bbf; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .upload-dashed { border: 2px dashed #dadce0; transition: all 0.2s ease; }
+        .upload-dashed:hover { border-color: #1a73e8; background-color: #f3faff; }
+        .ai-accent { box-shadow: inset 0 0 10px rgba(26, 115, 232, 0.05); border-left: 4px solid #1a73e8; }
+    </style>
+</head>
+<body class="bg-surface-gray font-body-md text-on-surface">
+<!-- Side Navigation Shell -->
+<nav class="fixed left-0 top-0 h-full w-[260px] bg-white border-r border-subtle flex flex-col py-6 z-50">
+<div class="px-6 mb-10 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">bid_landscape</span>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">BidFlow</h1>
+<p class="text-label-sm text-on-surface-variant">企业采购管理平台</p>
+</div>
+</div>
+<div class="flex-1 flex flex-col px-4 gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-gray transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">控制台</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-l-4 border-primary bg-surface-container-low" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-body-md">项目管理</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-gray transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md">资料库</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-gray transition-colors" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-body-md">合规核查</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-gray transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">统计报表</span>
+</a>
+</div>
+<div class="mt-auto px-4 flex flex-col gap-1">
+<button class="bg-primary-container text-white py-3 rounded-xl mb-4 font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                新建投标项目
+            </button>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-gray" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">设置</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-gray" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-md">帮助支持</span>
+</a>
+</div>
+</nav>
+<!-- Top App Bar -->
+<header class="fixed top-0 right-0 h-16 bg-white border-b border-subtle flex justify-between items-center px-margin-desktop w-[calc(100%-260px)] z-40">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="font-title-lg text-title-lg text-on-surface">项目详情</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-gray border-none rounded-lg text-body-md focus:ring-2 focus:ring-primary w-64 transition-all" placeholder="搜索项目数据..." type="text"/>
+</div>
+<div class="flex items-center gap-4 border-l border-subtle pl-6">
+<button class="p-2 hover:bg-surface-container-low rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error-red rounded-full"></span>
+</button>
+<div class="flex items-center gap-3 cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">JD</div>
+<div class="flex flex-col">
+<span class="font-body-md font-semibold">Jane Doe</span>
+<span class="text-[10px] text-on-surface-variant -mt-1">项目主管</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[260px] pt-16 min-h-screen">
+<div class="max-w-[1440px] mx-auto p-margin-desktop">
+<!-- Header Section: Project Info Card -->
+<div class="bg-white rounded-xl border border-subtle p-6 mb-8">
+<div class="flex justify-between items-start mb-6">
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">2024年城市基础设施现代化建设项目</h1>
+<span class="px-3 py-1 bg-success-green/10 text-success-green rounded-full text-label-sm uppercase tracking-wider">进行中</span>
+</div>
+<p class="text-body-lg text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">business</span>
+                            大都会交通管理局 (MTA)
+                        </p>
+</div>
+<div class="text-right">
+<p class="text-label-sm text-on-surface-variant uppercase mb-1">投标截止日期</p>
+<p class="font-title-lg text-title-lg text-error-red flex items-center justify-end gap-2">
+<span class="material-symbols-outlined">event</span>
+                            2024年10月24日
+                        </p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter border-t border-subtle pt-6">
+<div class="col-span-3">
+<div class="flex justify-between items-end mb-2">
+<span class="text-body-md font-semibold">响应就绪度</span>
+<span class="text-body-md text-primary font-bold">68%</span>
+</div>
+<div class="w-full bg-surface-gray h-3 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full transition-all duration-1000 ease-out" style="width: 68%;"></div>
+</div>
+</div>
+<div class="flex gap-3 justify-end items-center">
+<button class="px-4 py-2 border border-primary text-primary rounded-lg font-semibold hover:bg-primary/5 transition-colors">导出草稿</button>
+<button class="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary-container transition-colors shadow-sm">提交投标</button>
+</div>
+</div>
+</div>
+<!-- Main Tabs Content -->
+<div class="flex flex-col gap-6">
+<!-- Tab Headers -->
+<div class="flex border-b border-subtle gap-8">
+<button class="pb-4 font-semibold text-body-lg active-tab flex items-center gap-2 transition-all" id="tab-tender-head" onclick="switchTab('tender')">
+<span class="material-symbols-outlined">description</span>
+                        招标文件
+                    </button>
+<button class="pb-4 font-semibold text-body-lg text-on-surface-variant hover:text-primary flex items-center gap-2 transition-all" id="tab-response-head" onclick="switchTab('response')">
+<span class="material-symbols-outlined">list_alt</span>
+                        响应清单
+                    </button>
+<button class="pb-4 font-semibold text-body-lg text-on-surface-variant hover:text-primary flex items-center gap-2 transition-all" id="tab-compliance-head" onclick="switchTab('compliance')">
+<span class="material-symbols-outlined">verified_user</span>
+                        合规报告
+                    </button>
+</div>
+<!-- Tab 1: Tender Document -->
+<div class="tab-content active space-y-6" id="tab-tender">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-1">
+<div class="bg-white p-6 rounded-xl border border-subtle h-full">
+<h3 class="font-title-lg text-title-lg mb-4">文档管理</h3>
+<div class="upload-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer mb-6" id="drop-zone">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant mb-4">cloud_upload</span>
+<p class="font-semibold text-body-md mb-1">点击或拖拽文件进行上传</p>
+<p class="text-label-sm text-on-surface-variant">支持格式：PDF, DOCX, TXT (限 25MB)</p>
+</div>
+<div class="space-y-3" id="file-list">
+<!-- Uploading File -->
+<div class="p-3 bg-surface-gray rounded-lg border border-subtle">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">article</span>
+<span class="text-body-md font-medium truncate max-w-[150px]">招标文件_主版本_v2.pdf</span>
+</div>
+<span class="text-label-sm text-primary font-bold">92%</span>
+</div>
+<div class="w-full bg-white h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 92%"></div>
+</div>
+</div>
+<!-- Parsed File -->
+<div class="p-3 bg-white rounded-lg border border-subtle flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-success-green">check_circle</span>
+<span class="text-body-md">需求附件.pdf</span>
+</div>
+<button class="p-1 hover:bg-surface-gray rounded"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Analysis Result View -->
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-white rounded-xl border border-subtle overflow-hidden">
+<div class="bg-surface-container-low px-6 py-4 flex justify-between items-center">
+<h3 class="font-title-lg text-title-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">psychology</span>
+                                        AI 提取需求
+                                    </h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-primary/10 text-primary text-label-sm font-bold rounded">已识别 32 项需求</span>
+</div>
+</div>
+<div class="p-6 space-y-8">
+<section>
+<h4 class="text-label-sm font-bold text-on-surface-variant uppercase tracking-widest mb-4">基础信息</h4>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-gray rounded-lg border border-subtle">
+<p class="text-label-sm text-on-surface-variant mb-1">招标文件编号</p>
+<p class="font-semibold">MTA-2024-001-INFRA</p>
+</div>
+<div class="p-4 bg-surface-gray rounded-lg border border-subtle">
+<p class="text-label-sm text-on-surface-variant mb-1">项目总预算</p>
+<p class="font-semibold">$12,450,000.00 (预估)</p>
+</div>
+</div>
+</section>
+<section>
+<h4 class="text-label-sm font-bold text-on-surface-variant uppercase tracking-widest mb-4">资质要求</h4>
+<div class="space-y-4">
+<div class="ai-accent p-4 bg-primary/5 rounded-r-lg">
+<div class="flex justify-between mb-2">
+<span class="font-semibold text-primary">财务稳定性</span>
+<span class="text-label-sm bg-primary text-white px-2 py-0.5 rounded">高优先级</span>
+</div>
+<p class="text-body-md text-on-surface">"投标方必须证明年营业额不低于2000万美元（连续三个会计年度），并提供经审计的财务报表作为支持。"</p>
+<p class="mt-2 text-label-sm text-on-surface-variant italic">— 第 14 页，第 3.2.1 节</p>
+</div>
+<div class="ai-accent p-4 bg-primary/5 rounded-r-lg">
+<div class="flex justify-between mb-2">
+<span class="font-semibold text-primary">行业经验与认证</span>
+<span class="text-label-sm bg-outline text-white px-2 py-0.5 rounded">标准</span>
+</div>
+<p class="text-body-md text-on-surface">"提交投标文件时，必须持有有效的 ISO 9001 和 ISO 27001 认证。"</p>
+<p class="mt-2 text-label-sm text-on-surface-variant italic">— 第 16 页，第 4.5 节</p>
+</div>
+</div>
+</section>
+<section>
+<h4 class="text-label-sm font-bold text-on-surface-variant uppercase tracking-widest mb-4">技术要求</h4>
+<div class="p-4 border border-subtle rounded-lg bg-surface-gray">
+<p class="text-body-md text-on-surface">"所有基础设施组件必须支持至少 99.99% 的可用性，并在地理上不同的区域具备冗余容灾机制。"</p>
+<div class="mt-3 flex gap-2">
+<span class="px-2 py-1 bg-secondary-container/20 text-on-secondary-container text-label-sm rounded">云基础设施</span>
+<span class="px-2 py-1 bg-secondary-container/20 text-on-secondary-container text-label-sm rounded">冗余容灾</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab 2: Response Checklist -->
+<div class="tab-content space-y-6" id="tab-response">
+<div class="bg-white rounded-xl border border-subtle p-8 text-center py-20">
+<span class="material-symbols-outlined text-6xl text-outline-variant mb-4">checklist_rtl</span>
+<h3 class="font-headline-md text-headline-md mb-2">结构化响应矩阵</h3>
+<p class="text-body-lg text-on-surface-variant max-w-lg mx-auto mb-8">此视图将显示从招标文件分析中生成的逐项响应提示。协作人员可以在此处将各个部分分配给特定的团队成员。</p>
+<button class="px-6 py-3 bg-primary text-white rounded-lg font-bold">初始化响应生成器</button>
+</div>
+</div>
+<!-- Tab 3: Compliance Report -->
+<div class="tab-content space-y-6" id="tab-compliance">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-2">
+<div class="bg-white rounded-xl border border-subtle p-6">
+<h3 class="font-title-lg text-title-lg mb-6">风险分析摘要</h3>
+<div class="space-y-4">
+<div class="flex items-start gap-4 p-4 border border-subtle rounded-lg hover:border-error-red transition-colors">
+<span class="material-symbols-outlined text-error-red">warning</span>
+<div>
+<p class="font-bold text-on-surface">责任条款冲突</p>
+<p class="text-body-md text-on-surface-variant">第 12.4 节包含无限责任条款，这与我们的标准企业风险政策相冲突。</p>
+<button class="mt-2 text-primary font-bold text-label-sm">请求法务审核</button>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 border border-subtle rounded-lg hover:border-warning-amber transition-colors">
+<span class="material-symbols-outlined text-warning-amber">report_problem</span>
+<div>
+<p class="font-bold text-on-surface">时间进度过紧</p>
+<p class="text-body-md text-on-surface-variant">基于历史项目数据，第二阶段交付截止日期（2024年12月）被标记为高风险。</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="bg-white rounded-xl border border-subtle p-6">
+<h4 class="font-semibold mb-4">合规健康度</h4>
+<div class="relative w-32 h-32 mx-auto mb-4">
+<svg class="w-full h-full" viewbox="0 0 36 36">
+<path class="text-surface-gray stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="4"></path>
+<path class="text-success-green stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="82, 100" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-bold">82%</span>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant">通过</span>
+</div>
+</div>
+<ul class="text-label-sm space-y-2">
+<li class="flex justify-between"><span>监管合规</span> <span class="text-success-green">100%</span></li>
+<li class="flex justify-between"><span>技术合规</span> <span class="text-success-green">95%</span></li>
+<li class="flex justify-between"><span>商务合规</span> <span class="text-error-red">42%</span></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Success Toast (Hidden by default) -->
+<div class="fixed bottom-8 right-8 bg-on-surface text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 translate-y-24 opacity-0 transition-all duration-300 z-[100]" id="toast">
+<span class="material-symbols-outlined text-success-green">check_circle</span>
+<span class="font-semibold">文档解析成功！</span>
+</div>
+<script>
+        function switchTab(tabName) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // Remove active classes from all heads
+            document.querySelectorAll('[id^="tab-"][id$="-head"]').forEach(head => {
+                head.classList.remove('active-tab');
+                head.classList.add('text-on-surface-variant');
+            });
+            
+            // Show selected content
+            document.getElementById('tab-' + tabName).classList.add('active');
+            // Set active class to head
+            const activeHead = document.getElementById('tab-' + tabName + '-head');
+            activeHead.classList.add('active-tab');
+            activeHead.classList.remove('text-on-surface-variant');
+        }
+
+        // Micro-interaction: Mock Upload
+        const dropZone = document.getElementById('drop-zone');
+        const toast = document.getElementById('toast');
+
+        if(dropZone) {
+            dropZone.addEventListener('click', () => {
+                // Simulate start upload
+                toast.innerHTML = `<span class="material-symbols-outlined animate-spin text-primary">sync</span><span class="font-semibold">正在上传并分析文档...</span>`;
+                toast.classList.remove('translate-y-24', 'opacity-0');
+                
+                setTimeout(() => {
+                    toast.innerHTML = `<span class="material-symbols-outlined text-success-green">check_circle</span><span class="font-semibold">文档解析成功！</span>`;
+                    setTimeout(() => {
+                        toast.classList.add('translate-y-24', 'opacity-0');
+                    }, 3000);
+                }, 2000);
+            });
+        }
+    </script>
+</body></html>

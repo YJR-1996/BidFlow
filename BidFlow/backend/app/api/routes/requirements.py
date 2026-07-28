@@ -7,7 +7,7 @@ from app.models.bid_project import BidProject
 from app.models.requirement import Requirement
 from app.schemas.requirement import RequirementUpdate, RequirementResponse
 from app.schemas.common import ApiResponse
-from app.api.deps import get_current_user, get_project_or_404
+from app.api.deps import get_current_user, get_project_or_404_sync
 from app.core.exceptions import NotFoundException
 
 router = APIRouter()
@@ -15,7 +15,7 @@ router = APIRouter()
 
 @router.get("/projects/{project_id}/requirements", response_model=ApiResponse[List[RequirementResponse]])
 def list_requirements(
-    project: BidProject = Depends(get_project_or_404),
+    project: BidProject = Depends(get_project_or_404_sync),
     category: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     priority: Optional[str] = Query(None),

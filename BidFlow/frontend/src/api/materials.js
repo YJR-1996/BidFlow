@@ -1,1 +1,32 @@
-// 负责人：Codex。你要做什么：集中写企业资料和检索接口调用。实现步骤：1）提供上传、列表、删除；2）提供检索调试；3）将文件上传改为 multipart 请求；4）统一返回后端 data。完成后验证：CompanyMaterialsView 不直接处理 Axios 细节。
+// Company materials API calls
+import api from './client'
+
+// Upload company document
+export async function uploadMaterial(formData) {
+  const data = await api.post('/company-documents', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return data
+}
+
+// Get materials list (with optional project_id filter)
+export async function getMaterials(params = {}) {
+  const data = await api.get('/company-documents', { params })
+  return data
+}
+
+// Delete material
+export async function deleteMaterial(id) {
+  const data = await api.delete(`/company-documents/${id}`)
+  return data
+}
+
+// Search knowledge base
+export async function searchKnowledge(query, projectId, topK = 5) {
+  const data = await api.post('/retrieval/search', {
+    query,
+    project_id: projectId,
+    top_k: topK
+  })
+  return data
+}

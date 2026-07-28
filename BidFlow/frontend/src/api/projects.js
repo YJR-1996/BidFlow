@@ -1,1 +1,82 @@
-// 负责人：Codex。你要做什么：集中写项目、文件和需求清单接口调用。实现步骤：1）按 api-contract.md 写请求；2）提供项目 CRUD；3）提供上传与查询解析状态；4）提供需求筛选和更新；5）不在组件中写 URL。完成后验证：页面只调用此文件的方法即可完成项目主流程。
+// Project API calls
+import api from './client'
+
+// Get all projects
+export async function getProjects(params = {}) {
+  const data = await api.get('/projects', { params })
+  return data
+}
+
+// Get single project detail
+export async function getProject(id) {
+  const data = await api.get(`/projects/${id}`)
+  return data
+}
+
+// Create new project
+export async function createProject(projectData) {
+  const data = await api.post('/projects', projectData)
+  return data
+}
+
+// Update project
+export async function updateProject(id, projectData) {
+  const data = await api.patch(`/projects/${id}`, projectData)
+  return data
+}
+
+// Delete project
+export async function deleteProject(id) {
+  const data = await api.delete(`/projects/${id}`)
+  return data
+}
+
+// Upload tender document
+export async function uploadTender(projectId, formData) {
+  const data = await api.post(`/projects/${projectId}/tender-documents`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return data
+}
+
+// List tender documents for project
+export async function listTenderDocuments(projectId) {
+  const data = await api.get(`/projects/${projectId}/tender-documents`)
+  return data
+}
+
+// Get tender document detail
+export async function getTenderDocument(documentId) {
+  const data = await api.get(`/tender-documents/${documentId}`)
+  return data
+}
+
+// Delete tender document
+export async function deleteTenderDocument(documentId) {
+  const data = await api.delete(`/tender-documents/${documentId}`)
+  return data
+}
+
+// Parse tender document and extract requirements
+export async function parseTenderDocument(documentId) {
+  const data = await api.post(`/tender-documents/${documentId}/parse`)
+  return data
+}
+
+// Get requirements for project
+export async function getRequirements(projectId, params = {}) {
+  const data = await api.get(`/projects/${projectId}/requirements`, { params })
+  return data
+}
+
+// Get single requirement detail
+export async function getRequirement(requirementId) {
+  const data = await api.get(`/requirements/${requirementId}`)
+  return data
+}
+
+// Update requirement
+export async function updateRequirement(requirementId, updates) {
+  const data = await api.patch(`/requirements/${requirementId}`, updates)
+  return data
+}

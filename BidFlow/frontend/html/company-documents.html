@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BidFlow AI - 企业文档管理</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(218, 220, 224, 0.5);
+        }
+        .sidebar-active-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #005bbf;
+            border-radius: 0 4px 4px 0;
+        }
+        .drag-over {
+            border-color: #005bbf !important;
+            background-color: rgba(26, 115, 232, 0.05) !important;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c6d6;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #727785;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#d5ecf8",
+                        "background": "#f3faff",
+                        "primary-container": "#1a73e8",
+                        "surface-container": "#dbf1fe",
+                        "on-tertiary-container": "#0e0200",
+                        "secondary-container": "#759efd",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#cfe6f2",
+                        "secondary-fixed": "#d9e2ff",
+                        "tertiary-fixed": "#ffdbcb",
+                        "error-container": "#ffdad6",
+                        "surface": "#f3faff",
+                        "surface-dim": "#c7dde9",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001a41",
+                        "surface-variant": "#cfe6f2",
+                        "on-secondary-fixed": "#001945",
+                        "surface-bright": "#f3faff",
+                        "error": "#ba1a1a",
+                        "tertiary": "#9e4300",
+                        "on-background": "#071e27",
+                        "on-surface": "#071e27",
+                        "inverse-primary": "#adc7ff",
+                        "primary": "#005bbf",
+                        "on-secondary-fixed-variant": "#00429c",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "primary-fixed": "#d8e2ff",
+                        "inverse-on-surface": "#dff4ff",
+                        "secondary": "#2b5bb5",
+                        "tertiary-container": "#c55500",
+                        "outline": "#727785",
+                        "on-tertiary-fixed": "#341100",
+                        "on-primary-fixed-variant": "#004493",
+                        "success-green": "#34a853",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "on-surface-variant": "#414754",
+                        "border-subtle": "#dadce0",
+                        "on-primary-container": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#1e333c",
+                        "secondary-fixed-dim": "#b0c6ff",
+                        "surface-gray": "#f8f9fa",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#005bc0",
+                        "primary-fixed-dim": "#adc7ff",
+                        "on-secondary-container": "#00337c",
+                        "warning-amber": "#fbbc04",
+                        "surface-container-low": "#e6f6ff",
+                        "error-red": "#ea4335",
+                        "outline-variant": "#c1c6d6",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background font-body-md text-on-surface overflow-hidden">
+<!-- Sidebar Wrapper -->
+<aside class="fixed left-0 top-0 h-full w-[260px] bg-surface border-r border-outline-variant flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">BidFlow AI</h1>
+<p class="text-[12px] text-on-surface-variant opacity-70">智能编纂与核查平台</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-3 py-3 text-secondary hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3 text-[22px]">dashboard</span>
+<span class="font-body-md">首页概览</span>
+</a>
+<a class="flex items-center px-3 py-3 text-secondary hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3 text-[22px]">edit_note</span>
+<span class="font-body-md">智能编纂</span>
+</a>
+<a class="flex items-center px-3 py-3 text-secondary hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3 text-[22px]">verified_user</span>
+<span class="font-body-md">合规核查</span>
+</a>
+<div class="relative">
+<div class="sidebar-active-indicator"></div>
+<a class="flex items-center px-3 py-3 text-primary font-bold bg-primary-container/10 rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3 text-[22px]">archive</span>
+<span class="font-body-md">项目归档</span>
+</a>
+</div>
+<a class="flex items-center px-3 py-3 text-secondary hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined mr-3 text-[22px]">settings</span>
+<span class="font-body-md">系统设置</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant px-2">
+<button class="w-full bg-primary text-white py-3 rounded-xl font-title-sm flex items-center justify-center gap-2 hover:bg-secondary transition-all shadow-md">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>新建招投标项目</span>
+</button>
+<div class="mt-6 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full bg-surface-variant object-cover border border-outline-variant" data-alt="A professional high-quality portrait of a business executive in a modern tech-focused office environment, soft daylight illumination, corporate aesthetic, clean and authoritative look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjvnuUzU2-WvPJzK7NgDGjXPcaTwstT4VHa55FH-T7UzLRQyJI5lykdK_HuS176tkuvVaZnVFw4mE2vT8_9HWlwSmyqwADcgOKYAxAsLpVWvc2Cw5a7keHVDDyM-ZmH71sf0mUc-6xWBBbF237r3qecHNog7rrIN9-RgXvBF0ZvzKjy3O-kJ3IsyiZzSU8TXB-atPb9-nC2rCHoHXbTvY3zl_-EObq7mVKKeu6MQ1RkSB0QoMHg412"/>
+<div>
+<p class="text-sm font-bold text-on-surface">陈经理</p>
+<p class="text-[11px] text-on-surface-variant">高级标书专家</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-[260px] h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant flex items-center justify-between px-8 z-40 sticky top-0">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-background border border-outline-variant rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="搜索文档、项目或指令..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 overflow-hidden flex">
+<!-- Left Scrollable Area -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8">
+<!-- Page Header -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">企业文档中心</h2>
+<p class="text-on-surface-variant mt-1">管理您的招投标知识库，支持自动向量化索引以便AI调用。</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-surface border border-outline-variant text-on-surface-variant rounded-lg text-sm font-medium hover:bg-surface-variant transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">cloud_download</span>
+                            批量导出
+                        </button>
+</div>
+</div>
+<!-- 1. Upload Section -->
+<section class="grid grid-cols-12 gap-6">
+<div class="col-span-12 bg-surface-container-lowest border border-border-subtle rounded-xl p-6 shadow-sm">
+<div class="flex flex-col md:flex-row gap-8">
+<!-- Drag & Drop -->
+<div class="flex-1 border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center py-10 px-6 transition-all cursor-pointer hover:bg-surface-container-low group" id="drop-zone">
+<div class="w-16 h-16 bg-primary-container/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-[32px]">upload_file</span>
+</div>
+<h3 class="font-title-lg text-on-surface mb-2">点击或拖拽文件到此处上传</h3>
+<p class="text-on-surface-variant text-sm text-center max-w-xs">支持 PDF, DOCX, TXT 格式，单个文件不超过 50MB。AI 将自动解析文档内容。</p>
+<input class="hidden" id="file-input" multiple="" type="file"/>
+</div>
+<!-- Upload Options -->
+<div class="w-full md:w-80 flex flex-col justify-between">
+<div class="space-y-4">
+<label class="block">
+<span class="text-sm font-semibold text-on-surface mb-1.5 block">选择文档类别</span>
+<select class="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+<option>企业资质 (Qualification)</option>
+<option>成功案例 (Case Study)</option>
+<option>产品说明书 (Product Info)</option>
+<option>技术方案模版 (Technical Plan)</option>
+<option>其他参考资料 (Others)</option>
+</select>
+</label>
+<label class="block">
+<span class="text-sm font-semibold text-on-surface mb-1.5 block">标签 (可选)</span>
+<input class="w-full bg-background border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="输入标签按回车..." type="text"/>
+</label>
+</div>
+<button class="w-full mt-6 bg-primary text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-secondary transition-all">
+<span class="material-symbols-outlined">sync_alt</span>
+                                    开始上传并向量化
+                                </button>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Document Table Section -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+<h3 class="font-title-lg text-on-surface">已上传文档 <span class="text-sm font-normal text-on-surface-variant ml-2">(共 128 份)</span></h3>
+<div class="flex items-center gap-4">
+<div class="flex items-center bg-background rounded-lg border border-outline-variant p-1">
+<button class="px-3 py-1.5 bg-white shadow-sm rounded-md text-xs font-bold text-primary">全部</button>
+<button class="px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface">处理中</button>
+<button class="px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-on-surface">已完成</button>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-background text-on-surface-variant text-[12px] uppercase tracking-wider font-bold">
+<th class="px-6 py-4">文件名</th>
+<th class="px-6 py-4">类别</th>
+<th class="px-6 py-4">解析状态</th>
+<th class="px-6 py-4">向量化状态</th>
+<th class="px-6 py-4">上传时间</th>
+<th class="px-6 py-4 text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error-red">description</span>
+<span class="font-medium text-on-surface">2024年华为云伙伴合作协议.pdf</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-surface-container-high text-primary text-[11px] font-bold rounded">企业资质</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-success-green rounded-full"></span>
+<span class="text-sm">已上传</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-success-green text-[18px]">check_circle</span>
+<span class="text-sm">已就绪 (1,024 向量)</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">2023-11-24 14:20</td>
+<td class="px-6 py-4 text-right space-x-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="查看"><span class="material-symbols-outlined">visibility</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="重试"><span class="material-symbols-outlined">refresh</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors" title="删除"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+<!-- Row 2 - Processing -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">article</span>
+<span class="font-medium text-on-surface">智慧政务一体化平台技术方案.docx</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-surface-container-high text-primary text-[11px] font-bold rounded">技术方案</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<svg class="animate-spin h-4 w-4 text-primary" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+<span class="text-sm">解析中...</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-on-surface-variant italic text-sm">等待解析完成</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">2023-11-24 15:45</td>
+<td class="px-6 py-4 text-right space-x-2 opacity-50 cursor-not-allowed">
+<button class="p-2 text-on-surface-variant" disabled=""><span class="material-symbols-outlined">visibility</span></button>
+<button class="p-2 text-on-surface-variant" disabled=""><span class="material-symbols-outlined">refresh</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-warning-amber">workspace_premium</span>
+<span class="font-medium text-on-surface">三甲医院数据中心集成案例.pdf</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-surface-container-high text-primary text-[11px] font-bold rounded">成功案例</span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-success-green rounded-full"></span>
+<span class="text-sm">已上传</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-success-green text-[18px]">check_circle</span>
+<span class="text-sm">已就绪 (852 向量)</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">2023-11-23 09:10</td>
+<td class="px-6 py-4 text-right space-x-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="查看"><span class="material-symbols-outlined">visibility</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="重试"><span class="material-symbols-outlined">refresh</span></button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors" title="删除"><span class="material-symbols-outlined">delete</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Empty State (Hidden by default, used when no docs) -->
+<div class="hidden flex flex-col items-center justify-center py-20 px-4 text-center" id="empty-state">
+<div class="w-20 h-20 bg-background rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-outline-variant text-[40px]">folder_off</span>
+</div>
+<h4 class="font-title-lg text-on-surface">暂无相关文档</h4>
+<p class="text-on-surface-variant max-w-sm mt-2">您的知识库目前为空，请通过上方上传区域添加第一份企业文档。</p>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between">
+<span class="text-xs text-on-surface-variant font-medium">显示 1-10 共 128 个文档</span>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-background"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-background text-xs">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-background text-xs">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-background text-xs">...</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-background text-xs">13</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-background"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</section>
+</div>
+<!-- 3. Retrieval Test Sidebar -->
+<aside class="w-[380px] border-l border-outline-variant bg-surface flex flex-col">
+<div class="p-6 border-b border-outline-variant">
+<h3 class="font-title-lg text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">search_insights</span>
+                        检索能力测试 (Retrieval)
+                    </h3>
+<p class="text-[12px] text-on-surface-variant mt-2">测试 AI 如何从您的海量文档中提取相关片段，这是智能编纂的核心依赖。</p>
+</div>
+<div class="p-6 space-y-6 flex-1 overflow-y-auto">
+<div class="relative">
+<textarea class="w-full h-28 bg-background border border-outline-variant rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" placeholder="输入问题或关键词测试检索结果..." spellcheck="false"></textarea>
+<button class="absolute bottom-3 right-3 bg-primary text-white p-2 rounded-lg hover:bg-secondary transition-all shadow-sm">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">检索结果 (Top 3)</span>
+<span class="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-full font-bold">Latency: 420ms</span>
+</div>
+<!-- Result Card 1 -->
+<div class="bg-surface-container-lowest border border-border-subtle p-4 rounded-xl space-y-3 hover:border-primary/40 transition-colors cursor-pointer group">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">description</span>
+<span class="text-[12px] font-bold text-on-surface truncate max-w-[180px]">华为云伙伴合作协议.pdf</span>
+</div>
+<span class="text-xs font-bold text-success-green">Score: 0.95</span>
+</div>
+<p class="text-[13px] text-on-surface-variant leading-relaxed line-clamp-3">
+                                "...在本协议有效期内，乙方应确保其持有的各项企业资质符合甲方要求。重点包括ISO9001质量管理体系认证、信息安全等级保护三级认证以及..."
+                            </p>
+<div class="flex justify-end">
+<button class="text-primary text-[12px] font-bold flex items-center gap-1 group-hover:underline">
+                                    定位原文
+                                    <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</button>
+</div>
+</div>
+<!-- Result Card 2 -->
+<div class="bg-surface-container-lowest border border-border-subtle p-4 rounded-xl space-y-3 hover:border-primary/40 transition-colors cursor-pointer group">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">article</span>
+<span class="text-[12px] font-bold text-on-surface truncate max-w-[180px]">智慧政务技术方案.docx</span>
+</div>
+<span class="text-xs font-bold text-success-green">Score: 0.88</span>
+</div>
+<p class="text-[13px] text-on-surface-variant leading-relaxed line-clamp-3">
+                                "...本系统的核心架构基于分布式微服务，确保在高并发环境下政务审批流程的稳定性。通过接入企业文档中心，AI可以实现对历史审批数据的实时..."
+                            </p>
+<div class="flex justify-end">
+<button class="text-primary text-[12px] font-bold flex items-center gap-1 group-hover:underline">
+                                    定位原文
+                                    <span class="material-symbols-outlined text-[14px]">arrow_outward</span>
+</button>
+</div>
+</div>
+<!-- Loading placeholder for test -->
+<div class="animate-pulse bg-background p-4 rounded-xl border border-outline-variant border-dashed">
+<div class="h-3 bg-surface-variant rounded w-3/4 mb-3"></div>
+<div class="h-2 bg-surface-variant rounded w-full mb-2"></div>
+<div class="h-2 bg-surface-variant rounded w-full mb-2"></div>
+<div class="h-2 bg-surface-variant rounded w-1/2"></div>
+</div>
+</div>
+</div>
+<div class="p-6 bg-surface-container-low border-t border-outline-variant">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5">info</span>
+<div>
+<p class="text-[12px] font-bold text-on-surface">检索优化提示</p>
+<p class="text-[11px] text-on-surface-variant mt-1 leading-normal">如果检索质量不佳，建议尝试重新向量化文档或使用更高质量的文档切片策略。</p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<script>
+        // Simple micro-interactions
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('drag-over');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                console.log('Files dropped:', files);
+                // Here you would handle the upload logic
+            }
+        });
+    </script>
+</body></html>

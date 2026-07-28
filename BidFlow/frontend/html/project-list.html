@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BidFlow AI - 项目管理</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Vue 3 & Element Plus -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://unpkg.com/element-plus"></script>
+<link href="https://unpkg.com/element-plus/dist/index.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap');
+    
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background-color: #f7f9fc; /* Level 0 Background from Style Guidance */
+    }
+
+    /* AI Glassmorphism Cue */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid #EBEEF5;
+    }
+
+    /* Custom Scrollbar for the list */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c1c6d6;
+      border-radius: 10px;
+    }
+    
+    /* Active Nav Interaction */
+    .nav-item-active {
+      transform: scale(0.98);
+      transition: transform 0.2s ease;
+    }
+  </style>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "primary-fixed": "#d8e2ff",
+                  "surface-container-high": "#e6e8eb",
+                  "surface-container-low": "#f2f4f7",
+                  "on-tertiary-container": "#010600",
+                  "tertiary": "#286c00",
+                  "primary-fixed-dim": "#adc7ff",
+                  "tertiary-fixed-dim": "#80dd52",
+                  "outline": "#727785",
+                  "tertiary-container": "#348800",
+                  "secondary-fixed-dim": "#c7c6c8",
+                  "on-tertiary-fixed-variant": "#1d5200",
+                  "on-secondary": "#ffffff",
+                  "secondary-fixed": "#e3e2e4",
+                  "background": "#f7f9fc",
+                  "on-surface-variant": "#414754",
+                  "on-surface": "#191c1e",
+                  "surface": "#f7f9fc",
+                  "secondary": "#5e5e60",
+                  "on-tertiary-fixed": "#072100",
+                  "surface-variant": "#e0e3e6",
+                  "on-error": "#ffffff",
+                  "error": "#ba1a1a",
+                  "on-secondary-container": "#626265",
+                  "on-error-container": "#93000a",
+                  "inverse-primary": "#adc7ff",
+                  "on-primary": "#ffffff",
+                  "surface-container-highest": "#e0e3e6",
+                  "on-primary-container": "#ffffff",
+                  "inverse-on-surface": "#eff1f4",
+                  "surface-container": "#eceef1",
+                  "surface-tint": "#005bc0",
+                  "tertiary-fixed": "#9bfa6b",
+                  "on-tertiary": "#ffffff",
+                  "surface-container-lowest": "#ffffff",
+                  "on-secondary-fixed": "#1a1c1d",
+                  "on-primary-fixed": "#001a41",
+                  "primary": "#005bbf",
+                  "on-secondary-fixed-variant": "#464749",
+                  "on-primary-fixed-variant": "#004493",
+                  "inverse-surface": "#2d3133",
+                  "surface-bright": "#f7f9fc",
+                  "error-container": "#ffdad6",
+                  "surface-dim": "#d8dadd",
+                  "on-background": "#191c1e",
+                  "primary-container": "#1a73e8",
+                  "secondary-container": "#e0dfe1",
+                  "outline-variant": "#c1c6d6"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "stack-gap-md": "16px",
+                  "header-height": "64px",
+                  "stack-gap-lg": "24px",
+                  "padding-page": "32px",
+                  "stack-gap-sm": "8px",
+                  "sidebar-width": "260px",
+                  "gutter": "24px",
+                  "container-max-width": "1440px"
+          },
+          "fontFamily": {
+                  "label-caps": ["Inter"],
+                  "mono-code": ["JetBrains Mono"],
+                  "headline-md": ["Inter"],
+                  "body-sm": ["Inter"],
+                  "title-sm": ["Inter"],
+                  "display-lg": ["Inter"],
+                  "body-md": ["Inter"]
+          },
+          "fontSize": {
+                  "label-caps": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                  "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                  "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                  "body-sm": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+                  "title-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                  "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body>
+<div id="app" v-cloak="">
+<!-- SideNavBar Anchor -->
+<aside class="w-[260px] h-screen fixed left-0 top-0 border-r border-outline-variant bg-surface-container-lowest flex flex-col py-stack-gap-lg px-stack-gap-sm z-[60]">
+<div class="px-4 mb-10">
+<h1 class="font-display-lg text-display-lg font-bold text-primary">BidFlow AI</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant">企业采购平台</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a :class="[
+             'flex items-center px-4 py-3 rounded-lg transition-all',
+             activeNav === label ? 'text-primary font-bold bg-primary-container/10 nav-item-active' : 'text-on-surface-variant hover:bg-surface-container-high'
+           ]" :key="label" @click="activeNav = label" href="#" v-for="(label, index) in navTabs">
+<span :data-icon="navIcons[index]" class="material-symbols-outlined mr-3">{{ navIcons[index] }}</span>
+<span class="font-body-md text-body-md">{{ label }}</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<el-button @click="handleNewProject" class="w-full !rounded-xl !h-12 !font-bold" style="background-color: #1a73e8;" type="primary">
+<template #icon=""><span class="material-symbols-outlined">add</span></template>
+          新建项目
+        </el-button>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="ml-[260px] min-h-screen bg-surface-container-low">
+<!-- TopNavBar Anchor -->
+<header class="h-[64px] fixed top-0 right-0 left-[260px] z-50 bg-surface border-b border-outline-variant flex justify-between items-center px-padding-page shadow-sm">
+<div class="flex items-center gap-4 flex-1">
+<span class="font-headline-md text-headline-md font-bold text-on-surface">BidFlow</span>
+<div class="max-w-md w-full ml-8">
+<el-input class="!rounded-full" placeholder="搜索项目、文档或合规文件..." v-model="searchQuery">
+<template #prefix="">
+<span class="material-symbols-outlined text-outline">search</span>
+</template>
+</el-input>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<el-badge class="cursor-pointer" is-dot="">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</el-badge>
+<button class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors">帮助支持</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+<div class="text-right hidden sm:block">
+<p class="font-label-caps text-label-caps leading-none text-on-surface">Alex Rivera</p>
+<p class="text-[10px] text-outline">采购主管</p>
+</div>
+<el-avatar :size="36" data-alt="Alex Rivera" src="https://i.pravatar.cc/150?u=a"></el-avatar>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="pt-[96px] pb-12 px-padding-page">
+<!-- Statistics Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-gap-lg">
+<div :class="stat.isRisk ? 'border-l-4 border-l-error' : 'border-l-4 border-l-primary'" :key="stat.label" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-start justify-between" v-for="stat in stats">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-2">{{ stat.label }}</p>
+<p :class="stat.isRisk ? 'text-error' : 'text-on-surface'" class="font-display-lg text-display-lg font-bold">{{ stat.value }}</p>
+</div>
+<span :class="stat.isRisk ? 'bg-error-container text-on-error-container' : 'bg-primary-fixed text-on-primary-fixed'" class="material-symbols-outlined p-2 rounded-lg">{{ stat.icon }}</span>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<!-- Filter Bar -->
+<div class="p-6 border-b border-outline-variant flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-4 flex-1 min-w-[300px]">
+<el-input class="max-w-xs" placeholder="按项目名称筛选..." v-model="tableSearch">
+<template #prefix=""><span class="material-symbols-outlined text-sm">search</span></template>
+</el-input>
+<el-select class="w-40" placeholder="状态" v-model="statusFilter">
+<el-option label="全部" value="all"></el-option>
+<el-option label="准备中" value="准备中"></el-option>
+<el-option label="审核中" value="审核中"></el-option>
+<el-option label="已完成" value="已完成"></el-option>
+</el-select>
+</div>
+<el-button @click="handleNewProject" class="!px-6 !font-bold" style="background-color: #1a73e8;" type="primary">
+<template #icon=""><span class="material-symbols-outlined">add</span></template>
+              新建项目
+            </el-button>
+</div>
+<!-- Data Display -->
+<div class="p-0">
+<el-table :data="filteredProjects" :header-cell-style="{ background: '#f7f9fc', color: '#414754', fontWeight: 'bold' }" class="bidflow-table" style="width: 100%" v-loading="loading">
+<el-table-column label="项目名称" min-width="250">
+<template #default="scope">
+<div class="flex items-center gap-3 py-2">
+<span class="material-symbols-outlined text-primary-container">folder_managed</span>
+<div>
+<a class="font-title-sm text-primary hover:underline block leading-tight" href="#">{{ scope.row.name }}</a>
+<span class="text-[11px] text-outline font-mono-code">{{ scope.row.id }}</span>
+</div>
+</div>
+</template>
+</el-table-column>
+<el-table-column label="状态" width="120">
+<template #default="scope">
+<el-tag :type="getStatusType(scope.row.status)" class="!rounded-md !font-bold" effect="light">
+                    {{ scope.row.status }}
+                  </el-tag>
+</template>
+</el-table-column>
+<el-table-column label="完成度" width="180">
+<template #default="scope">
+<div class="flex flex-col gap-1">
+<el-progress :color="getProgressColor(scope.row.progress)" :percentage="scope.row.progress" :stroke-width="8"></el-progress>
+<span class="text-[11px] text-outline">已完成 {{ scope.row.progress }}%</span>
+</div>
+</template>
+</el-table-column>
+<el-table-column label="风险数量" width="120">
+<template #default="scope">
+<div class="flex items-center text-error gap-1" v-if="scope.row.risks &gt; 0">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="font-bold font-body-md">{{ scope.row.risks }}</span>
+</div>
+<span class="text-outline text-sm" v-else="">无风险</span>
+</template>
+</el-table-column>
+<el-table-column label="负责人" width="150">
+<template #default="scope">
+<div class="flex items-center gap-2">
+<el-avatar :size="24" :src="scope.row.ownerAvatar"></el-avatar>
+<span class="text-sm text-on-surface-variant">{{ scope.row.owner }}</span>
+</div>
+</template>
+</el-table-column>
+<el-table-column align="right" label="操作" width="200">
+<template #default="scope">
+<el-button @click="handleView(scope.row)" link="" type="primary">查看详情</el-button>
+<el-button @click="confirmDelete(scope.row)" link="" type="danger">删除</el-button>
+</template>
+</el-table-column>
+<template #empty="">
+<el-empty description="未找到符合条件的项目。">
+<el-button @click="handleNewProject" style="background-color: #1a73e8;" type="primary">创建首个项目</el-button>
+</el-empty>
+</template>
+</el-table>
+</div>
+<!-- Pagination -->
+<div class="p-6 border-t border-outline-variant flex justify-between items-center bg-surface-container-low/30">
+<span class="text-sm text-outline">显示第 {{ (currentPage-1)*10 + 1 }} 到 {{ Math.min(currentPage*10, filteredProjects.length) }} 条，共 {{ filteredProjects.length }} 条项目</span>
+<el-pagination :page-size="10" :total="filteredProjects.length" background="" layout="prev, pager, next" v-model:current-page="currentPage"></el-pagination>
+</div>
+</div>
+</div>
+</main>
+<!-- Delete Confirmation Dialog -->
+<el-dialog center="" class="!rounded-xl" title="确认删除" v-model="deleteDialogVisible" width="400px">
+<div class="text-center py-4">
+<span class="material-symbols-outlined text-6xl text-error mb-4">delete_forever</span>
+<p class="font-body-md text-body-md text-on-surface-variant">您确定要删除 <strong class="text-on-surface">{{ selectedProject?.name }}</strong> 吗？此操作无法撤销。</p>
+</div>
+<template #footer="">
+<span class="dialog-footer">
+<el-button @click="deleteDialogVisible = false">取消</el-button>
+<el-button @click="handleDelete" type="danger">
+            确认删除
+          </el-button>
+</span>
+</template>
+</el-dialog>
+</div>
+<script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    const app = createApp({
+      setup() {
+        const activeNav = ref('项目管理');
+        const navTabs = ["项目管理", "文档分析", "合规检查", "系统设置"];
+        const navIcons = ["folder_managed", "analytics", "fact_check", "settings"];
+
+        const searchQuery = ref('');
+        const tableSearch = ref('');
+        const statusFilter = ref('all');
+        const currentPage = ref(1);
+        const loading = ref(false);
+        const deleteDialogVisible = ref(false);
+        const selectedProject = ref(null);
+
+        const stats = ref([
+          { label: '项目总数', value: '124', icon: 'inventory_2', isRisk: false },
+          { label: '进行中', value: '42', icon: 'pending_actions', isRisk: false },
+          { label: '已完成', value: '78', icon: 'task_alt', isRisk: false },
+          { label: '高风险', value: '12', icon: 'emergency_home', isRisk: true },
+        ]);
+
+        const projects = ref([]);
+
+        // Mock API Integration
+        const fetchProjects = async () => {
+          loading.value = true;
+          setTimeout(() => {
+            projects.value = [
+              { id: 'BF-2023-001', name: '全球供应链审计 2024', status: '审核中', progress: 65, risks: 3, owner: 'Alex Rivera', ownerAvatar: 'https://i.pravatar.cc/150?u=a' },
+              { id: 'BF-2023-002', name: 'Z系列硬件采购', status: '准备中', progress: 20, risks: 0, owner: 'Sarah Chen', ownerAvatar: 'https://i.pravatar.cc/150?u=b' },
+              { id: 'BF-2023-003', name: '云基础设施升级', status: '已完成', progress: 100, risks: 0, owner: 'Mike Ross', ownerAvatar: 'https://i.pravatar.cc/150?u=c' },
+              { id: 'BF-2023-004', name: '合规性监管框架', status: '审核中', progress: 45, risks: 8, owner: 'Emma Wilson', ownerAvatar: 'https://i.pravatar.cc/150?u=d' },
+              { id: 'BF-2023-005', name: '可持续材料采购', status: '准备中', progress: 12, risks: 2, owner: 'David Wu', ownerAvatar: 'https://i.pravatar.cc/150?u=e' },
+              { id: 'BF-2023-006', name: '区域仓储物流', status: '已完成', progress: 100, risks: 0, owner: 'Alex Rivera', ownerAvatar: 'https://i.pravatar.cc/150?u=a' },
+              { id: 'BF-2023-007', name: '网络安全保险续约', status: '审核中', progress: 88, risks: 1, owner: 'Sarah Chen', ownerAvatar: 'https://i.pravatar.cc/150?u=b' },
+              { id: 'BF-2023-008', name: '员工健康与安全招标', status: '准备中', progress: 5, risks: 0, owner: 'Mike Ross', ownerAvatar: 'https://i.pravatar.cc/150?u=c' },
+            ];
+            loading.value = false;
+          }, 800);
+        };
+
+        const filteredProjects = computed(() => {
+          return projects.value.filter(p => {
+            const matchesSearch = p.name.toLowerCase().includes(tableSearch.value.toLowerCase());
+            const matchesStatus = statusFilter.value === 'all' || p.status === statusFilter.value;
+            return matchesSearch && matchesStatus;
+          });
+        });
+
+        const getStatusType = (status) => {
+          switch(status) {
+            case '准备中': return 'info';
+            case '审核中': return 'warning';
+            case '已完成': return 'success';
+            default: return '';
+          }
+        };
+
+        const getProgressColor = (progress) => {
+          if (progress < 30) return '#414754';
+          if (progress < 100) return '#1a73e8';
+          return '#286c00';
+        };
+
+        const handleNewProject = () => {
+          ElementPlus.ElMessage({
+            message: '正在初始化新项目工作区...',
+            type: 'success',
+          });
+        };
+
+        const handleView = (row) => {
+          ElementPlus.ElMessage(`正在跳转至 ${row.name} 详情...`);
+        };
+
+        const confirmDelete = (row) => {
+          selectedProject.value = row;
+          deleteDialogVisible.value = true;
+        };
+
+        const handleDelete = () => {
+          projects.value = projects.value.filter(p => p.id !== selectedProject.value.id);
+          deleteDialogVisible.value = false;
+          ElementPlus.ElMessage({
+            message: '项目已成功移除',
+            type: 'error',
+          });
+        };
+
+        onMounted(fetchProjects);
+
+        return {
+          activeNav, navTabs, navIcons,
+          searchQuery, tableSearch, statusFilter, currentPage, loading,
+          stats, projects, filteredProjects,
+          getStatusType, getProgressColor,
+          handleNewProject, handleView, confirmDelete, handleDelete,
+          deleteDialogVisible, selectedProject
+        };
+      }
+    });
+
+    app.use(ElementPlus);
+    app.mount('#app');
+  </script>
+</body></html>

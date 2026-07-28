@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BidFlow AI - 响应清单</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Config defined in prompt -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#dff4ff",
+                        "tertiary-container": "#c55500",
+                        "on-secondary-container": "#00337c",
+                        "secondary-fixed-dim": "#b0c6ff",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "tertiary": "#9e4300",
+                        "surface": "#f3faff",
+                        "primary-fixed-dim": "#adc7ff",
+                        "on-secondary-fixed": "#001945",
+                        "inverse-surface": "#1e333c",
+                        "surface-dim": "#c7dde9",
+                        "on-primary-container": "#ffffff",
+                        "secondary": "#2b5bb5",
+                        "on-tertiary-container": "#0e0200",
+                        "on-primary-fixed-variant": "#004493",
+                        "primary": "#005bbf",
+                        "on-background": "#071e27",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "outline-variant": "#c1c6d6",
+                        "on-tertiary-fixed": "#341100",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-fixed": "#d9e2ff",
+                        "on-error": "#ffffff",
+                        "outline": "#727785",
+                        "on-primary-fixed": "#001a41",
+                        "surface-tint": "#005bc0",
+                        "success-green": "#34a853",
+                        "border-subtle": "#dadce0",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f3faff",
+                        "secondary-container": "#759efd",
+                        "surface-container-low": "#e6f6ff",
+                        "on-surface": "#071e27",
+                        "on-secondary-fixed-variant": "#00429c",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#adc7ff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcb",
+                        "error-red": "#ea4335",
+                        "on-secondary": "#ffffff",
+                        "warning-amber": "#fbbc04",
+                        "surface-variant": "#cfe6f2",
+                        "surface-container-high": "#d5ecf8",
+                        "on-surface-variant": "#414754",
+                        "surface-gray": "#f8f9fa",
+                        "primary-container": "#1a73e8",
+                        "background": "#f3faff",
+                        "surface-container-highest": "#cfe6f2",
+                        "surface-container": "#dbf1fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "stack-gap": "12px",
+                        "sidebar-width": "260px",
+                        "container-max-width": "1440px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "title-lg": ["Inter"],
+                        "display-lg": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "title-lg": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .sidebar-active {
+            background-color: #759efd; /* bg-secondary-container */
+            color: #00337c; /* on-secondary-container */
+            border-left: 4px solid #005bbf; /* border-primary */
+            font-weight: 700;
+        }
+        .ai-shimmer {
+            background: linear-gradient(90deg, #1a73e8 0%, #759efd 50%, #1a73e8 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #c1c6d6;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden h-screen flex">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-secondary flex flex-col py-6 px-4 z-50 border-r border-border-subtle">
+<div class="mb-10 px-2">
+<h1 class="font-headline-md text-headline-md font-extrabold text-on-secondary">BidFlow</h1>
+<p class="text-on-secondary opacity-60 text-label-sm">企业级 AI</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-secondary opacity-80 hover:bg-secondary-container hover:text-on-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">控制台</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg sidebar-active" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">description</span>
+<span class="font-body-md">文档管理</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-secondary opacity-80 hover:bg-secondary-container hover:text-on-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-body-md">合规核查</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-secondary opacity-80 hover:bg-secondary-container hover:text-on-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-body-md">项目管理</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-white/10 space-y-1">
+<button class="w-full bg-primary-container text-white py-2.5 px-4 rounded-lg font-bold flex items-center justify-center gap-2 mb-4 hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>新建投标项目</span>
+</button>
+<a class="flex items-center gap-3 px-3 py-2 text-on-secondary opacity-80 hover:bg-secondary-container hover:text-on-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">设置</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-secondary opacity-80 hover:bg-secondary-container hover:text-on-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-body-md">帮助支持</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width flex-1 flex flex-col h-full bg-surface">
+<!-- TopNavBar (Authority: JSON) -->
+<header class="w-full h-16 bg-surface-container-lowest border-b border-border-subtle flex justify-between items-center px-margin-desktop z-40">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container border-none rounded-lg text-body-md focus:ring-2 focus:ring-primary-container transition-all" placeholder="搜索需求清单..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error-red rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="ml-2 flex items-center gap-2 cursor-pointer hover:bg-surface-container p-1 pr-3 rounded-full transition-all">
+<img class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a senior bid manager in a modern office, soft lighting, 4k resolution, business professional attire, confident expression, corporate photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAba9AmdX7OSvZNuippw6dgEw6IFSIb6KiYNhpMSqEb72oDpWZsdDtXnwRp0-ckp4kZzhtchUt1OI8Zj75G_VCMDrXjuYCUznNWegDgOMNL6oHeykvj_wE0c4W8QT7vtu8PhGNkVLIQG2XoE5SPz6p_1v8gyV67zBLWcAoR-P35_-qW1H1GtYEZ5s3W3CYhi9QwDdAxWyKZF-bQeJYv3ywZMgfF-MPs4FnCpnxEUlT1v_hS70Qr-ROR"/>
+<span class="font-body-md font-semibold text-on-surface">Alex Thompson</span>
+</div>
+</div>
+</header>
+<!-- Project Detail Header & Tabs -->
+<div class="px-margin-desktop pt-8 pb-4">
+<div class="flex items-center justify-between mb-6">
+<div>
+<nav class="flex items-center gap-2 text-label-sm text-on-surface-variant mb-1">
+<span>项目管理</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-semibold text-primary">2024全球基础设实施现代化项目</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">项目需求清单</h2>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-border-subtle bg-white rounded-lg hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+<span class="font-body-md font-semibold">导入招标文件</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary-container text-white rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">magic_button</span>
+<span class="font-body-md font-semibold">AI 全量分析</span>
+</button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-border-subtle gap-8">
+<button class="pb-3 text-body-md font-semibold text-on-surface-variant hover:text-on-surface">概览</button>
+<button class="pb-3 text-body-md font-bold text-primary border-b-2 border-primary">响应清单</button>
+<button class="pb-3 text-body-md font-semibold text-on-surface-variant hover:text-on-surface">团队协作</button>
+<button class="pb-3 text-body-md font-semibold text-on-surface-variant hover:text-on-surface">时间轴与阶段</button>
+</div>
+</div>
+<!-- Filter Header -->
+<section class="px-margin-desktop py-4 bg-white/50 backdrop-blur-sm border-b border-border-subtle flex flex-wrap items-center gap-4">
+<div class="flex flex-col gap-1">
+<label class="text-label-sm text-on-surface-variant">类别</label>
+<select class="bg-white border-border-subtle rounded text-body-md px-3 py-1.5 min-w-[140px] focus:ring-primary focus:border-primary">
+<option>全部</option>
+<option>资质</option>
+<option>商务</option>
+<option>技术</option>
+<option>评分</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-label-sm text-on-surface-variant">状态</label>
+<select class="bg-white border-border-subtle rounded text-body-md px-3 py-1.5 min-w-[140px] focus:ring-primary focus:border-primary">
+<option>所有状态</option>
+<option>未处理</option>
+<option>处理中</option>
+<option>已完成</option>
+<option>待评审</option>
+<option>存在风险</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-label-sm text-on-surface-variant">优先级</label>
+<select class="bg-white border-border-subtle rounded text-body-md px-3 py-1.5 min-w-[100px] focus:ring-primary focus:border-primary">
+<option>全部</option>
+<option>P0 - 紧急</option>
+<option>P1 - 高</option>
+<option>P2 - 普通</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-label-sm text-on-surface-variant">负责人</label>
+<select class="bg-white border-border-subtle rounded text-body-md px-3 py-1.5 min-w-[140px] focus:ring-primary focus:border-primary">
+<option>所有负责人</option>
+<option>Alex Thompson</option>
+<option>Sarah Chen</option>
+<option>Marcus Wright</option>
+</select>
+</div>
+<div class="flex-1 flex flex-col gap-1">
+<label class="text-label-sm text-on-surface-variant">关键词</label>
+<input class="bg-white border-border-subtle rounded text-body-md px-3 py-1.5 focus:ring-primary focus:border-primary" placeholder="搜索需求内容..." type="text"/>
+</div>
+<div class="self-end pb-0.5">
+<button class="p-2 bg-surface-container text-on-surface-variant rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">filter_alt_off</span>
+</button>
+</div>
+</section>
+<!-- Bulk Action Bar -->
+<section class="hidden px-margin-desktop py-2 bg-primary-container/10 border-b border-primary/20 flex items-center justify-between transition-all duration-300" id="bulk-bar">
+<div class="flex items-center gap-4">
+<span class="text-label-sm font-bold text-primary px-2 py-0.5 bg-primary/10 rounded">已选中 <span id="selected-count">0</span> 项</span>
+<div class="h-4 w-px bg-primary/20 mx-2"></div>
+<button class="text-body-md font-semibold text-primary hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">person_add</span> 批量分配
+                </button>
+<button class="text-body-md font-semibold text-primary hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">update</span> 更新状态
+                </button>
+<button class="text-body-md font-semibold text-error-red hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">delete</span> 删除
+                </button>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface" onclick="toggleBulk(false)">
+<span class="material-symbols-outlined">close</span>
+</button>
+</section>
+<!-- Requirement Table Area -->
+<div class="flex-1 overflow-auto custom-scrollbar bg-white">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead class="sticky top-0 bg-surface-gray z-10">
+<tr class="border-b border-border-subtle">
+<th class="py-3 px-6 w-12"><input class="rounded text-primary focus:ring-primary w-4 h-4" onchange="toggleBulk(this.checked)" type="checkbox"/></th>
+<th class="py-3 px-2 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider w-16 text-center">编号</th>
+<th class="py-3 px-4 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider w-32">类别</th>
+<th class="py-3 px-4 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider min-w-[300px]">需求内容</th>
+<th class="py-3 px-4 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider w-24">优先级</th>
+<th class="py-3 px-4 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider w-32 text-center">状态</th>
+<th class="py-3 px-4 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider w-36">负责人</th>
+<th class="py-3 px-4 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider w-24">风险</th>
+<th class="py-3 px-4 text-label-sm text-on-surface-variant font-semibold uppercase tracking-wider w-40 text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-4 px-6"><input class="rounded text-primary focus:ring-primary w-4 h-4" type="checkbox"/></td>
+<td class="py-4 px-2 text-center font-label-md text-label-md text-on-surface-variant">001</td>
+<td class="py-4 px-4">
+<span class="px-2 py-1 bg-secondary-container/20 text-on-secondary-container text-label-sm rounded border border-secondary-container/30">技术</span>
+</td>
+<td class="py-4 px-4">
+<div class="relative max-w-lg">
+<p class="text-body-md line-clamp-1 group-hover:line-clamp-none transition-all cursor-help" title="详细的云安全架构要求，包括多区域故障转移和数据层的 SOC2 Type II 合规证明。">
+                                    投标人必须提供详细的云安全架构，具备多区域...
+                                </p>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="flex items-center gap-1.5 text-error font-bold text-label-sm">
+<span class="w-2 h-2 rounded-full bg-error"></span> P0
+                            </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex justify-center">
+<span class="px-2.5 py-1 bg-success-green/10 text-success-green text-label-sm font-semibold rounded-full border border-success-green/20">已完成</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full" data-alt="Close up face of a male professional, short hair, glasses, neutral background, sharp focus, business headshot." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEF2e-Yfk4JIy5zuWAZlzDQzE3FOlOjlrNAbnx6koWPJR2MnB6BzegHcmaLfui5UXFf77xUNTllKd4pOMHogsV6aC9o8rHRh4GeJ3x6LUtTRqbERTanVq1Eiv_-a9JwsByQug-Ky1lXoXTygxgTGy_bD7Wq5b6DUZdxiNWj6RH_CPKPzH8x9D4B9_YsVL_l_wENxz387xgVRW8J9nxEXj_AyKZPQkYZuhXMsGt_e9FTCvRVukBYjaC"/>
+<span class="text-label-sm font-medium">Alex T.</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="text-label-sm font-bold text-success-green">低</span>
+</td>
+<td class="py-4 px-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors group/btn relative" title="AI 生成">
+<span class="material-symbols-outlined text-[18px]">magic_button</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 (AI Generation Highlighted) -->
+<tr class="hover:bg-surface transition-colors group bg-primary-container/5">
+<td class="py-4 px-6"><input class="rounded text-primary focus:ring-primary w-4 h-4" type="checkbox"/></td>
+<td class="py-4 px-2 text-center font-label-md text-label-md text-on-surface-variant">002</td>
+<td class="py-4 px-4">
+<span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-label-sm rounded border border-tertiary-fixed-dim/30">商务</span>
+</td>
+<td class="py-4 px-4">
+<div class="relative">
+<p class="text-body-md line-clamp-1 group-hover:line-clamp-none">
+                                    描述阶梯定价模型，包括实施费、维护成本...
+                                </p>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="flex items-center gap-1.5 text-warning-amber font-bold text-label-sm">
+<span class="w-2 h-2 rounded-full bg-warning-amber"></span> P1
+                            </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex justify-center">
+<span class="px-2.5 py-1 bg-primary-container text-white text-label-sm font-semibold rounded-full flex items-center gap-1 ai-shimmer">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span> 处理中
+                                </span>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full" data-alt="Portrait of a professional woman, professional attire, office environment background, natural lighting, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkvF3IQtTdOswXrMfj2E28jaL-jQS5gDe-iWxQkQozUYKLhmdehPIaeTXhHAoKLbzoXxDZQ4Ri46f7GpYp9XqbERYnTF_IgIQPZUBhb09vxNdK7S2-GaTn9SlG_FOizOqIiW86v9_Ka_4tKQDLk78tRN1RAazms4TSD4WdFG-Yg6rddU2KuPtfTWQT9Je9RTCxDzolKtJJjUG1QXw1IxgBgLeBsTJml3y-KrOq_2FPEh8BNKlgXmjT"/>
+<span class="text-label-sm font-medium">Sarah C.</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="text-label-sm font-bold text-warning-amber">中</span>
+</td>
+<td class="py-4 px-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 bg-primary-container text-white rounded text-label-sm font-bold flex items-center gap-1 shadow-sm hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[16px]">magic_button</span> 生成
+                                </button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 (Risk Highlighted) -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-4 px-6"><input class="rounded text-primary focus:ring-primary w-4 h-4" type="checkbox"/></td>
+<td class="py-4 px-2 text-center font-label-md text-label-md text-on-surface-variant">003</td>
+<td class="py-4 px-4">
+<span class="px-2 py-1 bg-surface-variant text-on-surface-variant text-label-sm rounded border border-outline-variant">资质</span>
+</td>
+<td class="py-4 px-4">
+<div class="relative">
+<p class="text-body-md line-clamp-1 group-hover:line-clamp-none">
+                                    提供在 EMEA 地区交付的三个类似政府级项目的证明...
+                                </p>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="flex items-center gap-1.5 text-on-surface-variant font-bold text-label-sm">
+<span class="w-2 h-2 rounded-full bg-outline"></span> P2
+                            </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex justify-center">
+<span class="px-2.5 py-1 bg-error/10 text-error text-label-sm font-semibold rounded-full border border-error/20">存在风险</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface-variant border border-outline-variant">UN</div>
+<span class="text-label-sm font-medium italic opacity-60">未分配</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="text-label-sm font-bold text-error">高</span>
+</td>
+<td class="py-4 px-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">magic_button</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="py-4 px-6"><input class="rounded text-primary focus:ring-primary w-4 h-4" type="checkbox"/></td>
+<td class="py-4 px-2 text-center font-label-md text-label-md text-on-surface-variant">004</td>
+<td class="py-4 px-4">
+<span class="px-2 py-1 bg-secondary-container/20 text-on-secondary-container text-label-sm rounded border border-secondary-container/30">技术</span>
+</td>
+<td class="py-4 px-4">
+<div class="relative">
+<p class="text-body-md line-clamp-1 group-hover:line-clamp-none">
+                                    提供遗留系统集成要求的 API 文档。
+                                </p>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="flex items-center gap-1.5 text-warning-amber font-bold text-label-sm">
+<span class="w-2 h-2 rounded-full bg-warning-amber"></span> P1
+                            </span>
+</td>
+<td class="py-4 px-4">
+<div class="flex justify-center">
+<span class="px-2.5 py-1 bg-surface-container text-on-surface-variant text-label-sm font-semibold rounded-full border border-outline-variant">未处理</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full" data-alt="Business headshot of a person with short brown hair, blue eyes, modern office lighting, corporate style, high definition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ4xjY3NIThimj-l2elf1rZJ5BoVvEY4An7EdrXvFST3muj1ZSUTiBjxpE5jnguiHqOaXVWkTy_u_AFghjCNNS5i5FHwCVAeQWFR2CucaSQUq73OBraYlqzWaT32VByJ-Ta6TCiyo46a3IR4TljXJYuWu7yx0ygTnMlim4xIfjTYlron63dNyoDZgaZ7zpao3633VZOub3WUDWybYzf4X_VQ7tSCxZPkRRqbg1nzEJEvDLgPVYmyAZ"/>
+<span class="text-label-sm font-medium">Marcus W.</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="text-label-sm font-bold text-success-green">低</span>
+</td>
+<td class="py-4 px-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">magic_button</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer Stats Bar -->
+<footer class="h-12 bg-surface-container-lowest border-t border-border-subtle flex items-center justify-between px-margin-desktop">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-label-sm text-on-surface-variant uppercase tracking-wider">总计:</span>
+<span class="text-body-md font-bold text-on-surface">42</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm text-on-surface-variant uppercase tracking-wider">已完成:</span>
+<span class="text-body-md font-bold text-success-green">28</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm text-on-surface-variant uppercase tracking-wider">待处理:</span>
+<span class="text-body-md font-bold text-warning-amber">14</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-label-sm text-on-surface-variant">第 1 页，共 5 页</span>
+<div class="flex gap-1">
+<button class="p-1 hover:bg-surface-container rounded transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</footer>
+</main>
+<script>
+        function toggleBulk(show) {
+            const bar = document.getElementById('bulk-bar');
+            const countSpan = document.getElementById('selected-count');
+            
+            if (show) {
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+                // Mock random selection for visual effect
+                countSpan.innerText = Math.floor(Math.random() * 4) + 1;
+            } else {
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+                
+                // Uncheck header checkbox if hidden via close button
+                const headerCheck = document.querySelector('thead input[type="checkbox"]');
+                if (headerCheck) headerCheck.checked = false;
+            }
+        }
+
+        // Handle checkboxes in table body
+        document.querySelectorAll('tbody input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const checkedCount = document.querySelectorAll('tbody input[type="checkbox"]:checked').length;
+                if (checkedCount > 0) {
+                    toggleBulk(true);
+                    document.getElementById('selected-count').innerText = checkedCount;
+                } else {
+                    toggleBulk(false);
+                }
+            });
+        });
+
+        // Simple mock AI generate interaction
+        document.querySelectorAll('[title="AI 生成"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('animate-spin');
+                setTimeout(() => {
+                    this.classList.remove('animate-spin');
+                    alert('BidFlow AI 正在基于您的知识库生成定制化的响应方案...');
+                }, 1000);
+            });
+        });
+    </script>
+</body></html>

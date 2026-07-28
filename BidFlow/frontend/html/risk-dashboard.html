@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BidFlow AI - 风险仪表盘</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Manrope, Inter, JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3faff;
+            color: #071e27;
+        }
+        .sidebar-active-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #005bbf;
+        }
+        /* Custom scrollbar for data-heavy sections */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c6d6;
+            border-radius: 10px;
+        }
+        /* Skeleton Animation */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed": "#d9e2ff",
+                        "on-secondary-container": "#00337c",
+                        "primary-container": "#1a73e8",
+                        "surface": "#f3faff",
+                        "success-green": "#34a853",
+                        "surface-dim": "#c7dde9",
+                        "surface-container-low": "#e6f6ff",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "primary": "#005bbf",
+                        "secondary": "#2b5bb5",
+                        "surface-gray": "#f8f9fa",
+                        "border-subtle": "#dadce0",
+                        "outline": "#727785",
+                        "error-red": "#ea4335",
+                        "warning-amber": "#fbbc04",
+                        "on-surface": "#071e27",
+                        "on-surface-variant": "#414754",
+                        "on-primary": "#ffffff",
+                        "background": "#f3faff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "stack-gap": "12px",
+                        "gutter": "24px",
+                        "sidebar-width": "260px",
+                        "container-max-width": "1440px"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "label-md": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex min-h-screen overflow-hidden">
+<!-- Sidebar (Shared Component Anchor) -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-lowest border-r border-border-subtle flex flex-col py-6 z-50">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" data-icon="business_center">business_center</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface leading-tight">BidFlow AI</h1>
+<p class="text-[10px] font-label-md text-on-surface-variant opacity-70">Enterprise Bid Automation</p>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 group relative" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="folder_managed">folder_managed</span>
+<span class="font-label-md text-label-md">项目管理</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md">文档分析</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container border-l-4 border-primary font-bold transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+<span class="font-label-md text-label-md">合规核查</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="business_center">business_center</span>
+<span class="font-label-md text-label-md">企业资料</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">设置</span>
+</a>
+</nav>
+<div class="mt-auto px-3">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-md text-label-md">帮助中心</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-sidebar-width flex flex-col h-screen relative">
+<!-- TopNavBar (Shared Component Anchor) -->
+<header class="h-16 w-full bg-surface-container-lowest border-b border-border-subtle flex justify-between items-center px-gutter sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="w-full bg-surface-gray border border-border-subtle rounded-lg py-2 pl-10 pr-4 text-body-md focus:outline-none focus:border-primary-container" placeholder="搜索项目、风险项或合规文档..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:bg-surface-gray p-2 rounded-full transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error-red rounded-full border border-white"></span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-gray p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-border-subtle">
+<div class="text-right">
+<p class="text-body-md font-semibold text-on-surface">张经理</p>
+<p class="text-[11px] text-on-surface-variant font-medium">高级竞标主管</p>
+</div>
+<img class="w-10 h-10 rounded-full border border-border-subtle bg-surface-container-low" data-alt="A professional headshot of a corporate manager in his 40s, wearing a dark navy blazer and a light blue shirt. The lighting is soft and professional, against a clean, light gray background, consistent with a high-end enterprise SaaS user profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7wUR7XOnFra9JSoiv1mShWa1gx1ExMNV6jMlC5GPCCbdg_5jUdL126cWz9onZH_XNA4sGBbDRWOtGcM8MoD41WBkWR7mIKyP-5Ofno9FpgY2JDJ_lFej45qX9boFAhEb4UBZWkqvzMIksn54vUlA5tZCCKaZTXsveTSv164zLFy5CYTLOxWZQLWfy4i1nzdbc81Le4FKAIrd5KYmXfhm7kPQwcrqy89XDrBquEMWLaV2kAofKcedD"/>
+</div>
+</div>
+</header>
+<!-- Main Dashboard Canvas -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-gutter bg-background">
+<div class="max-w-container-max-width mx-auto space-y-8">
+<!-- Page Header -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">风险分析仪表盘</h2>
+<p class="text-body-md text-on-surface-variant">基于 AI 实时生成的竞标合规与项目执行风险概览</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-border-subtle bg-white text-on-surface hover:bg-surface-gray rounded transition-colors text-body-md">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                            筛选
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary-container text-white hover:bg-primary transition-colors rounded text-body-md font-semibold shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                            启动风险评估
+                        </button>
+</div>
+</div>
+<!-- Skeleton Loader (Hidden after logic) -->
+<div class="space-y-8" id="skeleton-loader">
+<div class="grid grid-cols-4 gap-6">
+<div class="h-32 skeleton rounded-xl"></div>
+<div class="h-32 skeleton rounded-xl"></div>
+<div class="h-32 skeleton rounded-xl"></div>
+<div class="h-32 skeleton rounded-xl"></div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="h-80 skeleton rounded-xl"></div>
+<div class="h-80 skeleton rounded-xl"></div>
+</div>
+<div class="h-96 skeleton rounded-xl"></div>
+</div>
+<!-- Actual Dashboard Content (Initially hidden) -->
+<div class="hidden space-y-8" id="dashboard-content">
+<!-- Overview Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-white p-6 rounded-xl border border-border-subtle shadow-sm hover:shadow-md transition-shadow">
+<p class="text-label-md text-on-surface-variant mb-1">风险总数</p>
+<div class="flex items-end justify-between">
+<h3 class="text-4xl font-bold text-on-surface">142</h3>
+<span class="flex items-center text-error-red text-label-md font-bold">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_upward">arrow_upward</span>
+                                    12%
+                                </span>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border-l-4 border-l-error-red border border-border-subtle shadow-sm hover:shadow-md transition-shadow">
+<p class="text-label-md text-error-red font-bold mb-1 uppercase tracking-wider">高风险项</p>
+<div class="flex items-end justify-between">
+<h3 class="text-4xl font-bold text-on-surface">24</h3>
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-error-red" data-icon="report" style="font-variation-settings: 'FILL' 1;">report</span>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border-l-4 border-l-warning-amber border border-border-subtle shadow-sm hover:shadow-md transition-shadow">
+<p class="text-label-md text-warning-amber font-bold mb-1 uppercase tracking-wider">中风险项</p>
+<div class="flex items-end justify-between">
+<h3 class="text-4xl font-bold text-on-surface">56</h3>
+<div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-warning-amber" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl border-l-4 border-l-primary border border-border-subtle shadow-sm hover:shadow-md transition-shadow">
+<p class="text-label-md text-primary font-bold mb-1 uppercase tracking-wider">低风险项</p>
+<div class="flex items-end justify-between">
+<h3 class="text-4xl font-bold text-on-surface">62</h3>
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="info" style="font-variation-settings: 'FILL' 1;">info</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Charts Row -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="bg-white p-6 rounded-xl border border-border-subtle">
+<div class="flex justify-between items-center mb-6">
+<h4 class="text-body-lg font-bold text-on-surface">各项目风险分布</h4>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span></button>
+</div>
+<div class="w-full h-80" id="bar-chart"></div>
+</div>
+<div class="bg-white p-6 rounded-xl border border-border-subtle">
+<div class="flex justify-between items-center mb-6">
+<h4 class="text-body-lg font-bold text-on-surface">风险类别占比</h4>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span></button>
+</div>
+<div class="w-full h-80" id="pie-chart"></div>
+</div>
+</div>
+<!-- High Risk Projects List -->
+<div class="bg-white rounded-xl border border-border-subtle overflow-hidden">
+<div class="px-6 py-4 border-b border-border-subtle flex justify-between items-center bg-surface-gray">
+<h4 class="text-body-lg font-bold text-on-surface">高风险项目列表 (TOP 5)</h4>
+<a class="text-primary text-body-md font-semibold hover:underline" href="#">查看全部项目</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-gray/50">
+<tr>
+<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant uppercase">项目名称</th>
+<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant uppercase">风险总数</th>
+<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant uppercase">最新风险项</th>
+<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant uppercase text-center">风险状态</th>
+<th class="px-6 py-4 text-label-md font-bold text-on-surface-variant uppercase text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 font-semibold text-on-surface text-body-md">南方电网 2024 年度集采</td>
+<td class="px-6 py-4 text-body-md">
+<span class="font-mono text-error-red">12</span>
+</td>
+<td class="px-6 py-4 text-body-md text-on-surface-variant">
+                                            资质有效期：部分专利证书即将过期
+                                        </td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-error-container text-on-error-container uppercase">Pending</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-secondary font-semibold text-body-md">分析报告</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 font-semibold text-on-surface text-body-md">智慧城市基础设施二期</td>
+<td class="px-6 py-4 text-body-md">
+<span class="font-mono text-warning-amber">8</span>
+</td>
+<td class="px-6 py-4 text-body-md text-on-surface-variant">
+                                            合规条款：分包条款不符合主合同约定
+                                        </td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-primary uppercase">Processing</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-secondary font-semibold text-body-md">分析报告</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 font-semibold text-on-surface text-body-md">中建五局供应链金融系统</td>
+<td class="px-6 py-4 text-body-md">
+<span class="font-mono text-success-green">3</span>
+</td>
+<td class="px-6 py-4 text-body-md text-on-surface-variant">
+                                            价格波动：原材料成本预警 (已修正)
+                                        </td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-success-green uppercase">Resolved</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-secondary font-semibold text-body-md">分析报告</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 font-semibold text-on-surface text-body-md">海外港口数字化改造项目</td>
+<td class="px-6 py-4 text-body-md">
+<span class="font-mono text-error-red">15</span>
+</td>
+<td class="px-6 py-4 text-body-md text-on-surface-variant">
+                                            地缘政治：目标地区准入政策变动
+                                        </td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-error-container text-on-error-container uppercase">Pending</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-secondary font-semibold text-body-md">分析报告</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-6 py-4 font-semibold text-on-surface text-body-md">国家电网特高压通信配套</td>
+<td class="px-6 py-4 text-body-md">
+<span class="font-mono text-warning-amber">6</span>
+</td>
+<td class="px-6 py-4 text-body-md text-on-surface-variant">
+                                            财务合规：保证金缴纳时间窗口过紧
+                                        </td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-primary uppercase">Processing</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-secondary font-semibold text-body-md">分析报告</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Footer / Feedback -->
+<div class="flex justify-between items-center pt-8 border-t border-border-subtle pb-12">
+<p class="text-body-md text-on-surface-variant opacity-60">数据最后更新于: 2024-10-27 14:35:12</p>
+<div class="flex gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="file_download">file_download</span>
+                            导出 Excel
+                        </button>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="print">print</span>
+                            打印报告
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Initialization Scripts -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simulate API fetching
+            setTimeout(() => {
+                document.getElementById('skeleton-loader').classList.add('hidden');
+                document.getElementById('dashboard-content').classList.remove('hidden');
+                initCharts();
+            }, 1200);
+
+            function initCharts() {
+                // Bar Chart
+                const barChartDom = document.getElementById('bar-chart');
+                const barChart = echarts.init(barChartDom);
+                const barOption = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' }
+                    },
+                    grid: { top: '10%', left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                    xAxis: {
+                        type: 'category',
+                        data: ['电网项目', '智慧城市', '中建系统', '海外改造', '特高压项目'],
+                        axisLine: { lineStyle: { color: '#dadce0' } },
+                        axisLabel: { color: '#414754' }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: { show: false },
+                        splitLine: { lineStyle: { type: 'dashed', color: '#dadce0' } }
+                    },
+                    series: [{
+                        name: '风险数',
+                        type: 'bar',
+                        barWidth: '40%',
+                        data: [12, 8, 3, 15, 6],
+                        itemStyle: {
+                            color: function(params) {
+                                const colors = ['#ea4335', '#fbbc04', '#34a853', '#ea4335', '#fbbc04'];
+                                return colors[params.dataIndex];
+                            },
+                            borderRadius: [4, 4, 0, 0]
+                        }
+                    }]
+                };
+                barChart.setOption(barOption);
+
+                // Pie Chart
+                const pieChartDom = document.getElementById('pie-chart');
+                const pieChart = echarts.init(pieChartDom);
+                const pieOption = {
+                    tooltip: { trigger: 'item' },
+                    legend: { bottom: '5%', left: 'center', itemWidth: 10, itemHeight: 10, textStyle: { color: '#414754' } },
+                    series: [{
+                        name: '风险类别',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: {
+                            borderRadius: 10,
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        label: { show: false },
+                        emphasis: {
+                            label: { show: true, fontSize: '14', fontWeight: 'bold' }
+                        },
+                        data: [
+                            { value: 45, name: '合规风险', itemStyle: { color: '#1a73e8' } },
+                            { value: 30, name: '财务风险', itemStyle: { color: '#34a853' } },
+                            { value: 20, name: '政策风险', itemStyle: { color: '#fbbc04' } },
+                            { value: 15, name: '执行风险', itemStyle: { color: '#ea4335' } }
+                        ]
+                    }]
+                };
+                pieChart.setOption(pieOption);
+
+                // Responsive Charts
+                window.addEventListener('resize', () => {
+                    barChart.resize();
+                    pieChart.resize();
+                });
+            }
+        });
+    </script>
+</body></html>
