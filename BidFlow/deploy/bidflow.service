@@ -1,0 +1,17 @@
+[Unit]
+Description=BidFlow FastAPI service
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/bidflow/backend
+EnvironmentFile=/opt/bidflow/backend/.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/bidflow/backend/.venv/bin/gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --bind 127.0.0.1:8001 --access-logfile - --error-logfile -
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,8 @@
 # FastAPI & ASGI server
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
+gunicorn==23.0.0
+pydantic-settings==2.7.1
 
 # Database
 sqlalchemy[asyncio]==2.0.36
@@ -19,6 +21,10 @@ pymilvus==2.5.3
 # LLM
 dashscope==1.22.0
 openai>=1.0.0,<2.0.0
+
+# Document parsing
+PyPDF2==3.0.1
+python-docx==1.1.2
 
 # Testing
 pytest==8.3.4
