@@ -1,6 +1,45 @@
-# 负责人：成员 C
-#
-# 你要做什么：串起企业资料从上传到可检索的完整处理流程。
-# 实现顺序：1）创建 pending 资料记录；2）更新为 processing；3）调用 B 的 document_parser 提取文本；4）调用 text_chunker 切块；5）调用 vector_store 写入向量；6）成功更新 success；7）任何一步失败写 failed 和原因。
-# 删除顺序：先删 Chroma 向量，再删物理文件，最后删数据库记录；任何失败要记录日志。
-# 完成后验证：成功资料可被检索；解析失败资料不会写入部分向量。
+from pathlib import Path
+
+from fastapi import UploadFile
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.company_document import CompanyDocument
+from app.services.document_parser import document_parser_service
+from app.services.file_storage import file_storage_service
+from app.services.vector_store import vector_store
+
+
+class CompanyMaterialService:
+    async def upload_and_index(self, session: AsyncSession, owner_id: str, file: UploadFile) -> tuple[CompanyDocument, int]:
+        file_path, filename = file_storage_service.save_file(project_id=0, user_id=owner_id, file=file)
+        document = CompanyDocument(owner_id=owner_id, filename=filename, file_path=file_path, file_type=file_storage_service.get_file_extension(filename), status="processing")
+        session.add(document)
+        await session.commit()
+        await session.refresh(document)
+        try:
+            paragraphs = document_parser_service.parse(file_path, document.file_type or "txt")
+            chunks = [{"content": item["text"][:1200], "source_ref": item["source_ref"]} for item in paragraphs if item.get("text", "").strip()]
+            count = vector_store.upsert_chunks(document.id, owner_id, filename, chunks)
+            document.status = "success"
+            await session.commit()
+            await session.refresh(document)
+            return document, count
+        except Exception as exc:
+            document.status = "failed"
+            await session.commit()
+            Path(file_path).unlink(missing_ok=True)
+            raise exc
+
+    async def list_documents(self, session: AsyncSession, owner_id: str) -> list[CompanyDocument]:
+        return (await session.execute(select(CompanyDocument).where(CompanyDocument.owner_id == owner_id).order_by(CompanyDocument.created_at.desc()))).scalars().all()
+
+    async def delete_document(self, session: AsyncSession, owner_id: str, document_id: int) -> bool:
+        document = (await session.execute(select(CompanyDocument).where(CompanyDocument.id == document_id, CompanyDocument.owner_id == owner_id))).scalar_one_or_none()
+        if document is None:
+            return False
+        vector_store.delete_document(document.id)
+        Path(document.file_path).unlink(missing_ok=True)
+        await session.delete(document)
+        await session.commit()
+        return True

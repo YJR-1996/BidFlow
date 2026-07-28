@@ -1,7 +1,7 @@
 from typing import List, Dict
 import re
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.requirement import Requirement
 from app.core.exceptions import BusinessException
@@ -41,9 +41,9 @@ class TenderRequirementExtractorService:
             "售后", "质保",
         ]
 
-    def extract(
+    async def extract(
         self,
-        db: Session,
+        db: AsyncSession,
         project_id: int,
         tender_document_id: int,
         parsed_paragraphs: List[Dict],
@@ -78,7 +78,7 @@ class TenderRequirementExtractorService:
                 db.add(req)
                 result.append(req)
 
-            db.flush()
+            await db.flush()
             return result
 
         except Exception as e:

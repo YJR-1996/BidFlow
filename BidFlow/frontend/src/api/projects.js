@@ -1,1 +1,14 @@
-// 负责人：Codex。你要做什么：集中写项目、文件和需求清单接口调用。实现步骤：1）按 api-contract.md 写请求；2）提供项目 CRUD；3）提供上传与查询解析状态；4）提供需求筛选和更新；5）不在组件中写 URL。完成后验证：页面只调用此文件的方法即可完成项目主流程。
+import client from './client'
+
+export const listProjects = () => client.get('/projects')
+export const createProject = (payload) => client.post('/projects', payload)
+export const getProject = (id) => client.get(`/projects/${id}`)
+export const updateProject = (id, payload) => client.patch(`/projects/${id}`, payload)
+export const listRequirements = (id) => client.get(`/projects/${id}/requirements`)
+export const updateRequirement = (id, payload) => client.patch(`/requirements/${id}`, payload)
+export const uploadTender = (id, file) => {
+  const form = new FormData()
+  form.append('file', file)
+  return client.post(`/projects/${id}/tender-documents`, form)
+}
+export const parseTender = (id) => client.post(`/tender-documents/${id}/parse`)

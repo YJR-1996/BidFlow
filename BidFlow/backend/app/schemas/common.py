@@ -13,6 +13,10 @@ class SuccessResponse(BaseModel, Generic[T]):
     data: T | None = None
 
 
+# 兼容项目、招标文件和需求模块既有的响应类型名称。
+ApiResponse = SuccessResponse
+
+
 class ListResponse(BaseModel, Generic[T]):
     """统一列表响应格式"""
     code: int = 0

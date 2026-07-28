@@ -38,6 +38,13 @@ class DatabaseException(BaseAppException):
         super().__init__("DATABASE_ERROR", message)
 
 
+class BusinessException(BaseAppException):
+    """业务执行失败 - 400。"""
+
+    def __init__(self, message: str = "Business operation failed"):
+        super().__init__("BUSINESS_ERROR", message)
+
+
 class ForbiddenException(BaseAppException):
     """无权限 - 403"""
 
@@ -60,6 +67,7 @@ def http_exception(exc: BaseAppException) -> HTTPException:
         "VALIDATION_ERROR": status.HTTP_422_UNPROCESSABLE_ENTITY,
         "CONFLICT": status.HTTP_409_CONFLICT,
         "DATABASE_ERROR": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "BUSINESS_ERROR": status.HTTP_400_BAD_REQUEST,
         "FORBIDDEN": status.HTTP_403_FORBIDDEN,
     }
     return HTTPException(

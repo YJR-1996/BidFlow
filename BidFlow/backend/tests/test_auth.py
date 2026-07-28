@@ -1,11 +1,43 @@
+import asyncio
+import os
+import tempfile
+
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.main import app
+from app.db.session import Base, get_session
 
 
 @pytest.fixture
-def client():
+def test_db():
+    """认证测试使用独立 SQLite，不能依赖本机 MySQL 的历史数据和连接状态。"""
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    engine = create_async_engine(f"sqlite+aiosqlite:///{db_path}")
+    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    async def create_tables():
+        from app.db import base  # noqa: F401
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+
+    asyncio.run(create_tables())
+
+    async def override_get_session():
+        async with factory() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+    yield
+    app.dependency_overrides.clear()
+    asyncio.run(engine.dispose())
+    os.close(db_fd)
+    os.unlink(db_path)
+
+
+@pytest.fixture
+def client(test_db):
     """创建测试客户端"""
     return TestClient(app)
 

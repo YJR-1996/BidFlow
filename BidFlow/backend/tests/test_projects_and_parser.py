@@ -1,38 +1,41 @@
+import asyncio
 import os
 import tempfile
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.main import app
-from app.db.session import Base, get_db
-from app.core.config import settings
+from app.db.session import Base, get_db, get_session
 
 
 @pytest.fixture
 def test_db():
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
-    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    Base.metadata.create_all(bind=engine)
+    engine = create_async_engine(f"sqlite+aiosqlite:///{db_path}")
+    TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-    def override_get_db():
-        db = TestingSessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
+    async def create_tables():
+        from app.db import base  # noqa: F401
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
 
-    app.dependency_overrides[get_db] = override_get_db
+    asyncio.run(create_tables())
+
+    async def override_get_session():
+        async with TestingSessionLocal() as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_db] = override_get_session
 
     yield TestingSessionLocal
 
     app.dependency_overrides.clear()
-    engine.dispose()
+    asyncio.run(engine.dispose())
     os.close(db_fd)
     try:
         os.unlink(db_path)
@@ -51,13 +54,13 @@ def auth_headers(client, test_db):
         "username": "test_user_b",
         "password": "test123456",
     })
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     response = client.post("/api/auth/login", json={
         "username": "test_user_b",
         "password": "test123456",
     })
-    token = response.json()["data"]["access_token"]
+    token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -145,11 +148,11 @@ def test_cannot_access_other_user_project(client, auth_headers):
         "username": "test_user_c",
         "password": "test123456",
     })
-    other_token = login_resp.json()["data"]["access_token"]
+    other_token = login_resp.json()["access_token"]
     other_headers = {"Authorization": f"Bearer {other_token}"}
 
     response = client.get(f"/api/projects/{project_id}", headers=other_headers)
-    assert response.status_code == 403
+    assert response.status_code == 404
 
 
 TENDER_CONTENT_1 = (

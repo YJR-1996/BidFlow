@@ -10,7 +10,7 @@ class BidProject(Base):
     __tablename__ = "bid_projects"
 
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     name = Column(String(200), nullable=False)
     tenderer = Column(String(200))
     deadline = Column(DateTime)

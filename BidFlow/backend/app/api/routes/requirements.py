@@ -1,78 +1,74 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 
-from app.db.session import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import get_current_user, get_project_or_404
+from app.db.session import get_session
 from app.models.bid_project import BidProject
 from app.models.requirement import Requirement
-from app.schemas.requirement import RequirementUpdate, RequirementResponse
+from app.models.user import User
 from app.schemas.common import ApiResponse
-from app.api.deps import get_current_user, get_project_or_404
-from app.core.exceptions import NotFoundException
+from app.schemas.requirement import RequirementResponse, RequirementUpdate
 
 router = APIRouter()
 
 
+async def _get_requirement_or_404(requirement_id: int, current_user: User, session: AsyncSession) -> Requirement:
+    result = await session.execute(
+        select(Requirement).join(BidProject).where(
+            Requirement.id == requirement_id,
+            BidProject.owner_id == str(current_user.id),
+        )
+    )
+    requirement = result.scalar_one_or_none()
+    if requirement is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"code": "NOT_FOUND", "message": "需求项不存在"})
+    return requirement
+
+
 @router.get("/projects/{project_id}/requirements", response_model=ApiResponse[List[RequirementResponse]])
-def list_requirements(
+async def list_requirements(
     project: BidProject = Depends(get_project_or_404),
-    category: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    priority: Optional[str] = Query(None),
-    keyword: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
+    category: str | None = Query(None),
+    status: str | None = Query(None),
+    priority: str | None = Query(None),
+    keyword: str | None = Query(None),
+    session: AsyncSession = Depends(get_session),
 ):
-    query = db.query(Requirement).filter(Requirement.project_id == project.id)
-
+    stmt = select(Requirement).where(Requirement.project_id == project.id)
     if category:
-        query = query.filter(Requirement.category == category)
+        stmt = stmt.where(Requirement.category == category)
     if status:
-        query = query.filter(Requirement.status == status)
+        stmt = stmt.where(Requirement.status == status)
     if priority:
-        query = query.filter(Requirement.priority == priority)
+        stmt = stmt.where(Requirement.priority == priority)
     if keyword:
-        query = query.filter(Requirement.content.contains(keyword))
-
-    requirements = query.order_by(Requirement.priority, Requirement.created_at.desc()).all()
+        stmt = stmt.where(Requirement.content.contains(keyword))
+    requirements = (await session.execute(stmt.order_by(Requirement.priority, Requirement.created_at.desc()))).scalars().all()
     return ApiResponse(data=requirements)
 
 
 @router.get("/requirements/{requirement_id}", response_model=ApiResponse[RequirementResponse])
-def get_requirement(
+async def get_requirement(
     requirement_id: int,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
 ):
-    req = db.query(Requirement).filter(Requirement.id == requirement_id).first()
-    if not req:
-        raise NotFoundException(message="需求项不存在")
-
-    project = db.query(BidProject).filter(BidProject.id == req.project_id).first()
-    if not project or project.owner_id != current_user.id:
-        raise NotFoundException(message="需求项不存在")
-
-    return ApiResponse(data=req)
+    return ApiResponse(data=await _get_requirement_or_404(requirement_id, current_user, session))
 
 
 @router.patch("/requirements/{requirement_id}", response_model=ApiResponse[RequirementResponse])
-def update_requirement(
+async def update_requirement(
     requirement_id: int,
     request: RequirementUpdate,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
 ):
-    req = db.query(Requirement).filter(Requirement.id == requirement_id).first()
-    if not req:
-        raise NotFoundException(message="需求项不存在")
-
-    project = db.query(BidProject).filter(BidProject.id == req.project_id).first()
-    if not project or project.owner_id != current_user.id:
-        raise NotFoundException(message="需求项不存在")
-
-    update_data = request.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(req, key, value)
-
-    db.commit()
-    db.refresh(req)
-    return ApiResponse(data=req)
+    requirement = await _get_requirement_or_404(requirement_id, current_user, session)
+    for key, value in request.model_dump(exclude_unset=True).items():
+        setattr(requirement, key, value)
+    await session.commit()
+    await session.refresh(requirement)
+    return ApiResponse(data=requirement)

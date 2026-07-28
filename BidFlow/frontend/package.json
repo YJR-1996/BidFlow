@@ -1,1 +1,19 @@
-// 负责人：Codex。步骤：声明 Vue、Vite、Vue Router、Pinia、Element Plus、Axios；配置 dev、build、preview 脚本。验收：安装依赖后可启动开发服务并构建生产包。
+{
+  "name": "bidflow-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.5"
+  }
+}

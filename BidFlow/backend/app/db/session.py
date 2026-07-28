@@ -12,7 +12,8 @@ class Base(DeclarativeBase):
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
-    pool_pre_ping=True,
+    # asyncmy 0.2.9 的 ping 签名与 SQLAlchemy 的预检不兼容；连接失败由请求实际执行时返回。
+    pool_pre_ping=False,
 )
 
 async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

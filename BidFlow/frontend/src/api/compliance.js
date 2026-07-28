@@ -1,1 +1,8 @@
-// 负责人：Codex。你要做什么：集中写草稿和合规报告接口调用。实现步骤：1）提供生成与保存草稿；2）提供审核状态更新；3）提供运行核查、查询报告、下载 Markdown；4）保持字段与 schemas 一致。完成后验证：报告页可仅依赖此文件完成所有请求。
+import client from './client'
+
+export const generateDraft = (payload) => client.post('/responses/generate', payload)
+export const getDraft = (id) => client.get(`/responses/${id}`)
+export const updateDraft = (id, payload) => client.patch(`/responses/${id}`, payload)
+export const runCompliance = (id) => client.post(`/compliance/projects/${id}/run`)
+export const getReport = (id) => client.get(`/compliance/projects/${id}/report`)
+export const reportUrl = (id) => `/api/compliance/projects/${id}/report.md`

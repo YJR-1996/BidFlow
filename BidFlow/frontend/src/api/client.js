@@ -1,1 +1,20 @@
-// 负责人：Codex。步骤：创建 Axios 实例；请求前注入 Token；响应后提取统一 data；401 时清理登录状态；统一提示网络与业务错误。验收：页面无需重复处理鉴权与错误。
+import axios from 'axios'
+
+const client = axios.create({ baseURL: '/api', timeout: 30000 })
+
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('bidflow_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+client.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const message = error.response?.data?.detail?.message || error.response?.data?.detail || error.message || '请求失败'
+    if (error.response?.status === 401) localStorage.removeItem('bidflow_token')
+    return Promise.reject(new Error(message))
+  },
+)
+
+export default client

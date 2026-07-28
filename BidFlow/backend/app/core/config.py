@@ -29,14 +29,18 @@ class Settings(BaseSettings):
 
     # LLM / DashScope
     DASHSCOPE_API_KEY: str = ""
-    LLM_MODEL_NAME: str = "qwen-max"
-    EMBEDDING_MODEL: str = "text-embedding-v3"
+    DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    LLM_MODEL_NAME: str = "qwen-flash-2025-07-28"
+    EMBEDDING_MODEL: str = "text-embedding-v4"
+    EMBEDDING_DIMENSION: int = 1024
 
     # 目录
     BASE_DIR: Path = Path(__file__).resolve().parents[2]
     UPLOAD_DIR: Path = BASE_DIR / "uploads"
     DATA_DIR: Path = BASE_DIR / "data"
     CHROMA_DIR: Path = BASE_DIR / "chroma"
+    ALLOWED_EXTENSIONS: set[str] = {"txt", "pdf", "docx", "doc"}
+    MAX_UPLOAD_SIZE: int = 20 * 1024 * 1024
 
     @property
     def DATABASE_URL(self) -> str:
