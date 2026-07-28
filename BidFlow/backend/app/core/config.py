@@ -3,6 +3,11 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
+# 计算项目根目录（backend/）
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_ENV_FILE = _PROJECT_ROOT / ".env"
+
+
 class Settings(BaseSettings):
     """应用配置，从 .env 文件加载环境变量"""
 
@@ -32,22 +37,27 @@ class Settings(BaseSettings):
     LLM_MODEL_NAME: str = "qwen-max"
     EMBEDDING_MODEL: str = "text-embedding-v3"
 
+    # 文件上传
+    ALLOWED_EXTENSIONS: set = {"pdf", "docx", "txt"}
+    MAX_FILE_SIZE: int = 25 * 1024 * 1024  # 25MB
+
     # 目录
-    BASE_DIR: Path = Path(__file__).resolve().parents[2]
-    UPLOAD_DIR: Path = BASE_DIR / "uploads"
-    DATA_DIR: Path = BASE_DIR / "data"
-    CHROMA_DIR: Path = BASE_DIR / "chroma"
+    BASE_DIR: Path = _PROJECT_ROOT
+    UPLOAD_DIR: Path = _PROJECT_ROOT / "uploads"
+    DATA_DIR: Path = _PROJECT_ROOT / "data"
+    CHROMA_DIR: Path = _PROJECT_ROOT / "chroma"
 
     @property
     def DATABASE_URL(self) -> str:
         return (
-            f"mysql+asyncmy://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}"
+            f"mysql+aiomysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}"
             f"@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"
         )
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = {
+        "env_file": str(_ENV_FILE),
+        "env_file_encoding": "utf-8",
+    }
 
 
 settings = Settings()

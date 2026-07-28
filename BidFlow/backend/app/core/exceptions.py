@@ -45,10 +45,25 @@ class ForbiddenException(BaseAppException):
         super().__init__("FORBIDDEN", message)
 
 
+class BusinessException(BaseAppException):
+    """业务逻辑错误 - 400"""
+
+    def __init__(self, message: str = "Business error"):
+        super().__init__("BUSINESS_ERROR", message)
+
+
 async def app_exception_handler(request: Request, exc: BaseAppException) -> JSONResponse:
-    """统一异常处理器"""
+    """统一异常处理器 - 根据异常类型返回对应状态码"""
+    status_map = {
+        "NOT_FOUND": status.HTTP_404_NOT_FOUND,
+        "VALIDATION_ERROR": status.HTTP_422_UNPROCESSABLE_ENTITY,
+        "CONFLICT": status.HTTP_409_CONFLICT,
+        "DATABASE_ERROR": status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "FORBIDDEN": status.HTTP_403_FORBIDDEN,
+        "BUSINESS_ERROR": status.HTTP_400_BAD_REQUEST,
+    }
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status_map.get(exc.code, status.HTTP_500_INTERNAL_SERVER_ERROR),
         content={"detail": {"code": exc.code, "message": exc.message}},
     )
 

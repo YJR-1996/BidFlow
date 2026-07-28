@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-from app.core.exceptions import ConflictException, http_exception
+from app.core.exceptions import ConflictException, DatabaseException, http_exception
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_session
 from app.models.user import User
@@ -28,27 +28,33 @@ router = APIRouter(prefix="/auth", tags=["认证"])
 )
 async def register(body: RegisterRequest, session: AsyncSession = Depends(get_session)):
     """用户注册"""
-    # 检查用户名是否已存在
-    stmt = select(User).where(User.username == body.username)
-    result = await session.execute(stmt)
-    if result.scalar_one_or_none():
-        raise http_exception(ConflictException("用户名已存在"))
+    try:
+        # 检查用户名是否已存在
+        stmt = select(User).where(User.username == body.username)
+        result = await session.execute(stmt)
+        if result.scalar_one_or_none():
+            raise http_exception(ConflictException("用户名已存在"))
 
-    user = User(
-        id=str(uuid.uuid4()),
-        username=body.username,
-        password_hash=hash_password(body.password),
-        is_active=True,
-    )
-    session.add(user)
-    await session.commit()
-    await session.refresh(user)
+        user = User(
+            id=str(uuid.uuid4()),
+            username=body.username,
+            password_hash=hash_password(body.password),
+            is_active=True,
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
 
-    return RegisteredUserResponse(
-        id=user.id,
-        username=user.username,
-        created_at=user.created_at,
-    )
+        return RegisteredUserResponse(
+            id=user.id,
+            username=user.username,
+            created_at=user.created_at,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        await session.rollback()
+        raise http_exception(DatabaseException(f"注册失败: {str(e)}"))
 
 
 @router.post("/login", response_model=TokenResponse)
