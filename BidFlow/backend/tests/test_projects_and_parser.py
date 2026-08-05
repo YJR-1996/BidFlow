@@ -3,36 +3,53 @@ import tempfile
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.main import app
-from app.db.session import Base, get_db
+from app.db.session import get_db, get_session
+from app.db.base import Base
 from app.core.config import settings
 
 
 @pytest.fixture
 def test_db():
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
-    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    Base.metadata.create_all(bind=engine)
+    # 同时使用同步引擎和异步引擎，覆盖 get_db / get_session 两种依赖
+    async_engine = create_async_engine(
+        f"sqlite+aiosqlite:///{db_path}",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    TestingAsyncSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+    sync_engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+    TestingSyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+    Base.metadata.create_all(bind=sync_engine)
+
+    async def override_get_session():
+        async with TestingAsyncSessionLocal() as session:
+            yield session
 
     def override_get_db():
-        db = TestingSessionLocal()
+        db = TestingSyncSessionLocal()
         try:
             yield db
         finally:
             db.close()
 
+    app.dependency_overrides[get_session] = override_get_session
     app.dependency_overrides[get_db] = override_get_db
 
-    yield TestingSessionLocal
+    yield TestingSyncSessionLocal
 
     app.dependency_overrides.clear()
-    engine.dispose()
+    import asyncio
+    asyncio.run(async_engine.dispose())
+    sync_engine.dispose()
     os.close(db_fd)
     try:
         os.unlink(db_path)
@@ -51,13 +68,14 @@ def auth_headers(client, test_db):
         "username": "test_user_b",
         "password": "test123456",
     })
-    assert response.status_code == 200
+    # register 返回 201 Created
+    assert response.status_code in (200, 201)
 
     response = client.post("/api/auth/login", json={
         "username": "test_user_b",
         "password": "test123456",
     })
-    token = response.json()["data"]["access_token"]
+    token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -145,11 +163,12 @@ def test_cannot_access_other_user_project(client, auth_headers):
         "username": "test_user_c",
         "password": "test123456",
     })
-    other_token = login_resp.json()["data"]["access_token"]
+    other_token = login_resp.json()["access_token"]
     other_headers = {"Authorization": f"Bearer {other_token}"}
 
     response = client.get(f"/api/projects/{project_id}", headers=other_headers)
-    assert response.status_code == 403
+    # get_project_or_404_sync 以 404 形式拒绝访问（"项目不存在或无权限"）
+    assert response.status_code == 404
 
 
 TENDER_CONTENT_1 = (
@@ -287,6 +306,68 @@ def test_update_requirement(client, auth_headers):
     assert data["content"] == "更新后的需求内容"
     assert data["status"] == "处理中"
     assert data["priority"] == "P0"
+
+
+def test_batch_update_requirement_status(client, auth_headers):
+    """批量更新需求状态：支持全量和指定 ids 两种模式"""
+    create_resp = client.post("/api/projects", json={
+        "name": "批量状态更新测试项目",
+    }, headers=auth_headers)
+    project_id = create_resp.json()["data"]["id"]
+
+    content = (
+        "一、资格要求\n"
+        "1. 投标人必须具有独立法人资格。\n"
+        "2. 投标人须具备相应的经营资质。\n"
+        "\n"
+        "二、技术要求\n"
+        "1. 近三年须有同类项目案例。"
+    )
+    upload_resp = client.post(
+        f"/api/projects/{project_id}/tender-documents",
+        files={"file": ("test.txt", content.encode("utf-8"), "text/plain")},
+        headers=auth_headers,
+    )
+    document_id = upload_resp.json()["data"]["id"]
+    client.post(f"/api/tender-documents/{document_id}/parse", headers=auth_headers)
+
+    list_resp = client.get(f"/api/projects/{project_id}/requirements", headers=auth_headers)
+    all_ids = [r["id"] for r in list_resp.json()["data"]]
+    assert len(all_ids) >= 2
+
+    # 1) 指定 ids 批量更新
+    target_ids = all_ids[:2]
+    patch_resp = client.patch(
+        f"/api/requirements/projects/{project_id}/batch-status",
+        json={"status": "待评审", "ids": target_ids},
+        headers=auth_headers,
+    )
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["data"]["updated"] == len(target_ids)
+
+    verify_resp = client.get(f"/api/projects/{project_id}/requirements", headers=auth_headers)
+    updated_ids = {r["id"] for r in verify_resp.json()["data"] if r["status"] == "待评审"}
+    assert updated_ids == set(target_ids)
+
+    # 2) 全量更新（不传 ids）
+    patch_all_resp = client.patch(
+        f"/api/requirements/projects/{project_id}/batch-status",
+        json={"status": "已完成"},
+        headers=auth_headers,
+    )
+    assert patch_all_resp.status_code == 200
+    assert patch_all_resp.json()["data"]["updated"] == len(all_ids)
+
+    final_resp = client.get(f"/api/projects/{project_id}/requirements", headers=auth_headers)
+    assert all(r["status"] == "已完成" for r in final_resp.json()["data"])
+
+    # 3) 缺失 status 应返回 400 / BusinessException
+    err_resp = client.patch(
+        f"/api/requirements/projects/{project_id}/batch-status",
+        json={},
+        headers=auth_headers,
+    )
+    assert err_resp.status_code != 200
 
 
 TENDER_CONTENT_3 = (

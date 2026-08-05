@@ -27,8 +27,9 @@ export const useAuthStore = defineStore('auth', () => {
   async function doLogin(username, password) {
     try {
       const res = await loginApi(username, password)
-      if (res.data && res.data.access_token) {
-        setToken(res.data.access_token)
+      // /auth/login returns TokenResponse directly: { access_token, token_type }
+      if (res && res.access_token) {
+        setToken(res.access_token)
         await fetchCurrentUser()
         return res
       }
@@ -52,7 +53,8 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchCurrentUser() {
     try {
       const res = await getCurrentUserApi()
-      user.value = res.data
+      // /auth/me returns UserResponse directly: { id, username, is_active, created_at }
+      user.value = res
     } catch {
       clearAuth()
     }

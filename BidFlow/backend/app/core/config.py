@@ -36,10 +36,25 @@ class Settings(BaseSettings):
     DASHSCOPE_API_KEY: str = ""
     LLM_MODEL_NAME: str = "qwen-max"
     EMBEDDING_MODEL: str = "text-embedding-v3"
+    SEMANTIC_COMPLIANCE_ENABLED: bool = True
+
+    # OCR - 图片型 PDF 识别
+    OCR_ENABLED: bool = True
+    OCR_MODEL: str = "qwen-vl-ocr"
+    OCR_DPI: int = 200
+
+    # CORS
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+
+    @property
+    def CORS_ORIGINS_LIST(self) -> list[str]:
+        """解析 CORS_ORIGINS 为列表"""
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     # 文件上传
     ALLOWED_EXTENSIONS: set = {"pdf", "docx", "txt"}
     MAX_FILE_SIZE: int = 25 * 1024 * 1024  # 25MB
+    MAX_UPLOAD_SIZE: int = 25 * 1024 * 1024  # 25MB (兼容 file_storage.py 使用)
 
     # 目录
     BASE_DIR: Path = _PROJECT_ROOT

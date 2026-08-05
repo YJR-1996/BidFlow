@@ -7,6 +7,10 @@ from app.models.user import User
 from app.models.bid_project import BidProject
 from app.models.tender_document import TenderDocument
 from app.models.requirement import Requirement
+from app.models.response import Response
+from app.models.compliance_issue import ComplianceIssue
+from app.models.match_analysis import MatchAnalysisDetail, MatchAnalysisRun
+from sqlalchemy import select
 from app.schemas.tender_document import TenderDocumentResponse, ParseResultResponse
 from app.schemas.common import ApiResponse
 from app.api.deps import get_current_user, get_project_or_404_sync
@@ -135,8 +139,48 @@ def delete_tender_document(
     if not project or project.owner_id != current_user.id:
         raise NotFoundException(message="招标文件不存在")
 
-    file_storage_service.delete_file(doc.file_path)
+    file_path = doc.file_path
+    project_id = doc.project_id
+
+    # 级联清理（按依赖顺序：先子后父）
+    # bulk query.delete() 不触发 ORM cascade，必须手动按表清理
+    # 1) 先按 project_id 清掉所有合规问题（避免需求删除时遗留 requirement_id 关联）
+    db.query(ComplianceIssue).filter(
+        ComplianceIssue.project_id == project_id
+    ).delete(synchronize_session=False)
+
+    # 2) 删除项目级的比对分析运行记录（details 通过 ORM cascade 自动清）
+    #    必须在删 Requirement 前完成——否则历史 runs 会显示已删除的需求数据
+    db.query(MatchAnalysisRun).filter(
+        MatchAnalysisRun.project_id == project_id
+    ).delete(synchronize_session=False)
+
+    # 3) 找出关联需求的 id 子查询，删除其响应、合规细节和比对分析细节
+    req_ids_subq = select(Requirement.id).where(
+        Requirement.tender_document_id == document_id
+    )
+    db.query(Response).filter(
+        Response.requirement_id.in_(req_ids_subq)
+    ).delete(synchronize_session=False)
+    db.query(ComplianceIssue).filter(
+        ComplianceIssue.requirement_id.in_(req_ids_subq)
+    ).delete(synchronize_session=False)
+    db.query(MatchAnalysisDetail).filter(
+        MatchAnalysisDetail.requirement_id.in_(req_ids_subq)
+    ).delete(synchronize_session=False)
+
+    # 4) 删除关联需求
+    db.query(Requirement).filter(
+        Requirement.tender_document_id == document_id
+    ).delete(synchronize_session=False)
+
+    # 先提交 DB 删除，再删物理文件：避免 commit 失败导致文件已丢而 DB 记录残留
     db.delete(doc)
     db.commit()
+    try:
+        file_storage_service.delete_file(file_path)
+    except Exception:
+        # 文件残留可由后台 GC 兜底，DB 一致性已由 commit 保证
+        pass
 
     return ApiResponse(data={"message": "删除成功"})

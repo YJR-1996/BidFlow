@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.models.types import UTCDateTime
 
 
 class Requirement(Base):
@@ -16,12 +17,13 @@ class Requirement(Base):
     content = Column(Text, nullable=False)
     source_text = Column(Text)
     source_ref = Column(String(200))
+    source = Column(String(20), default="parsed", index=True)
     priority = Column(String(10), default="P2")
     status = Column(String(20), default="未处理")
     assignee_id = Column(String(36), ForeignKey("users.id"))
     risk_level = Column(String(10), default="低")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(UTCDateTime, default=datetime.utcnow)
+    updated_at = Column(UTCDateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     project = relationship("BidProject", back_populates="requirements")
     tender_document = relationship("TenderDocument", back_populates="requirements")

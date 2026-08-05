@@ -1,17 +1,17 @@
-<!-- LoginView.vue - Login and register page -->
 <template>
   <div class="login-page">
-    <!-- Left Side: Brand Visual Area -->
     <div class="brand-area">
       <div class="brand-content">
         <div class="brand-logo">
           <div class="logo-icon">
-            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">tips_and_updates</span>
           </div>
           <h1>BidFlow AI</h1>
         </div>
-        <h2>智能编制与合规核查平台</h2>
-        <p>加速招投标流程，保障文件合规性。利用深度学习与大语言模型，为您的采购与投标提供全方位的技术支撑。</p>
+        <div class="brand-text">
+          <h2>智能编制与合规核查平台</h2>
+          <p>加速招投标流程，保障文件合规性。利用深度学习与大语言模型，为您的采购与投标提供全方位的技术支撑。</p>
+        </div>
         <div class="brand-stats">
           <div class="stat-card">
             <span class="material-symbols-outlined">speed</span>
@@ -29,21 +29,18 @@
           </div>
         </div>
       </div>
+      <div class="decoration-blob"></div>
     </div>
 
-    <!-- Right Side: Form Area -->
     <div class="form-area">
-      <div class="form-container" :class="{ 'fade-in': true }">
-        <!-- Header -->
+      <div class="form-container fade-in">
         <div class="form-header">
           <h3 v-if="isLogin">欢迎回来</h3>
           <h3 v-else>创建新账号</h3>
           <p>{{ isLogin ? '请登录您的账户以开始工作' : '加入 BidFlow AI，开启高效智能编纂之旅。' }}</p>
         </div>
 
-        <!-- Login Form -->
         <div v-if="isLogin" class="login-form">
-          <!-- Username -->
           <div class="form-group">
             <label>用户名</label>
             <div class="input-wrapper">
@@ -60,7 +57,6 @@
             <p class="error-text" :class="{ hidden: !loginErrors.username }">{{ loginErrors.username }}</p>
           </div>
 
-          <!-- Password -->
           <div class="form-group">
             <div class="form-label-row">
               <label>密码</label>
@@ -77,55 +73,24 @@
                 @input="clearError('password')"
               />
               <button type="button" class="toggle-password" @click="showPassword = !showPassword">
-                <span class="material-symbols-outlined input-icon">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+                <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
               </button>
             </div>
             <p class="error-text" :class="{ hidden: !loginErrors.password }">{{ loginErrors.password }}</p>
           </div>
 
-          <!-- Remember me & Forgot -->
-          <div class="form-options">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="loginForm.remember" />
-              <span>记住我</span>
-            </label>
-            <a class="forgot-link" href="#">忘记密码？</a>
-          </div>
-
-          <!-- Submit Button -->
           <button
             class="submit-btn"
             :class="{ loading: loginLoading }"
             @click="handleLogin"
             :disabled="loginLoading"
           >
-            <span v-if="!loginLoading">{{ isLogin ? '登录' : '注册' }}</span>
+            <span v-if="!loginLoading">登录</span>
             <span v-else>处理中...</span>
           </button>
-
-          <!-- Divider -->
-          <div class="divider">
-            <div class="divider-line"></div>
-            <span class="divider-text">其他登录方式</span>
-            <div class="divider-line"></div>
-          </div>
-
-          <!-- Social Login -->
-          <div class="social-buttons">
-            <button class="social-btn" type="button">
-              <span class="material-symbols-outlined">fingerprint</span>
-              <span>指纹</span>
-            </button>
-            <button class="social-btn" type="button">
-              <span class="material-symbols-outlined">qr_code</span>
-              <span>扫码</span>
-            </button>
-          </div>
         </div>
 
-        <!-- Register Form -->
         <div v-else class="register-form">
-          <!-- Username -->
           <div class="form-group">
             <label>用户名</label>
             <div class="input-wrapper">
@@ -142,7 +107,6 @@
             <p class="error-text" :class="{ hidden: !registerErrors.username }">用户名长度至少为3位</p>
           </div>
 
-          <!-- Password -->
           <div class="form-group">
             <label>密码</label>
             <div class="input-wrapper">
@@ -156,13 +120,12 @@
                 @input="clearError('register_password')"
               />
               <button type="button" class="toggle-password" @click="showRegPassword = !showRegPassword">
-                <span class="material-symbols-outlined input-icon">{{ showRegPassword ? 'visibility_off' : 'visibility' }}</span>
+                <span class="material-symbols-outlined">{{ showRegPassword ? 'visibility_off' : 'visibility' }}</span>
               </button>
             </div>
             <p class="error-text" :class="{ hidden: !registerErrors.password }">密码长度至少为6位</p>
           </div>
 
-          <!-- Confirm Password -->
           <div class="form-group">
             <label>确认密码</label>
             <div class="input-wrapper">
@@ -176,13 +139,12 @@
                 @input="clearError('register_confirm')"
               />
               <button type="button" class="toggle-password" @click="showRegConfirmPassword = !showRegConfirmPassword">
-                <span class="material-symbols-outlined input-icon">{{ showRegConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+                <span class="material-symbols-outlined">{{ showRegConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
               </button>
             </div>
             <p class="error-text" :class="{ hidden: !registerErrors.confirm }">两次输入的密码不一致</p>
           </div>
 
-          <!-- Agreement -->
           <div class="agreement">
             <input type="checkbox" id="agreement" v-model="registerForm.agreed" />
             <label for="agreement">
@@ -190,7 +152,6 @@
             </label>
           </div>
 
-          <!-- Submit Button -->
           <button
             class="submit-btn"
             :class="{ loading: registerLoading }"
@@ -202,7 +163,6 @@
           </button>
         </div>
 
-        <!-- Footer Toggle -->
         <div class="form-footer">
           <p v-if="isLogin">
             还没有账号？
@@ -219,15 +179,27 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const isLogin = ref(true)
+
+function syncModeFromRoute() {
+  if (route.meta?.mode === 'register') {
+    isLogin.value = false
+  } else {
+    isLogin.value = true
+  }
+}
+
+watch(() => route.path, syncModeFromRoute)
+onMounted(syncModeFromRoute)
 const loginLoading = ref(false)
 const registerLoading = ref(false)
 const showPassword = ref(false)
@@ -237,14 +209,13 @@ const showRegConfirmPassword = ref(false)
 const loginForm = reactive({
   username: '',
   password: '',
-  remember: false
 })
 
 const registerForm = reactive({
   username: '',
   password: '',
   confirmPassword: '',
-  agreed: false
+  agreed: false,
 })
 
 const loginErrors = reactive({
@@ -285,8 +256,8 @@ async function handleLogin() {
   try {
     await authStore.doLogin(loginForm.username, loginForm.password)
     ElMessage.success('登录成功')
-    router.push('/')
-  } catch (error) {
+    router.push('/projects')
+  } catch {
     // Error handled by API interceptor
   } finally {
     loginLoading.value = false
@@ -322,7 +293,7 @@ async function handleRegister() {
     await authStore.doRegister(registerForm.username, registerForm.password)
     ElMessage.success('注册成功！正在前往登录页面')
     isLogin.value = true
-  } catch (error) {
+  } catch {
     // Error handled by API interceptor
   } finally {
     registerLoading.value = false
@@ -335,31 +306,31 @@ async function handleRegister() {
   display: flex;
   min-height: 100vh;
   overflow: hidden;
+  background: var(--surface);
 }
 
-/* Brand area (left side) */
 .brand-area {
   display: none;
   flex: 1;
-  background: #1a73e8;
-  align-items: center;
-  justify-content: center;
-  padding: 64px;
+  background: linear-gradient(135deg, #005bbf 0%, #1a73e8 100%);
   position: relative;
   overflow: hidden;
+  padding: 64px;
+  color: white;
 }
 
 @media (min-width: 1024px) {
   .brand-area {
     display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 }
 
 .brand-content {
-  max-width: 480px;
-  color: white;
   position: relative;
-  z-index: 1;
+  z-index: 10;
+  max-width: 480px;
 }
 
 .brand-logo {
@@ -377,38 +348,41 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .logo-icon .material-symbols-outlined {
   font-size: 30px;
-  color: #1a73e8;
+  color: var(--primary-container);
 }
 
 .brand-logo h1 {
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: white;
 }
 
-.brand-content > h2 {
+.brand-text h2 {
   font-size: 32px;
   font-weight: 700;
+  color: white;
   margin-bottom: 16px;
   line-height: 1.2;
 }
 
-.brand-content > p {
+.brand-text p {
   font-size: 18px;
   opacity: 0.85;
-  margin-bottom: 48px;
   line-height: 1.7;
+  max-width: 440px;
 }
 
 .brand-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  margin-top: 48px;
 }
 
 .stat-card {
@@ -420,6 +394,11 @@ async function handleRegister() {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  transition: background 0.2s;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .stat-card .material-symbols-outlined {
@@ -431,36 +410,53 @@ async function handleRegister() {
   display: block;
   font-size: 14px;
   margin-bottom: 2px;
+  color: white;
 }
 
-.stat-card span:last-child {
+.stat-card span {
   font-size: 12px;
-  opacity: 0.6;
+  opacity: 0.7;
+  color: white;
 }
 
-/* Form area (right side) */
+.decoration-blob {
+  position: absolute;
+  bottom: -80px;
+  right: -80px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
 .form-area {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background: #f7f9fc;
+  background: var(--surface);
 }
 
 .form-container {
   width: 100%;
   max-width: 440px;
+  background: white;
+  padding: 40px 32px;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 12px 40px rgba(0, 91, 191, 0.08);
 }
 
 .fade-in {
-  animation: fadeInSlideUp 0.7s ease-out;
+  animation: fadeInSlideUp 0.6s ease-out;
 }
 
 @keyframes fadeInSlideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -468,7 +464,6 @@ async function handleRegister() {
   }
 }
 
-/* Form header */
 .form-header {
   text-align: center;
   margin-bottom: 32px;
@@ -483,18 +478,18 @@ async function handleRegister() {
 .form-header h3 {
   font-size: 24px;
   font-weight: 600;
-  color: #191c1e;
+  color: var(--on-surface);
   margin-bottom: 8px;
 }
 
 .form-header p {
   font-size: 14px;
-  color: #414754;
+  color: var(--on-surface-variant);
+  margin: 0;
 }
 
-/* Form groups */
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .form-label-row {
@@ -507,9 +502,9 @@ async function handleRegister() {
 .form-label-row label,
 .form-group label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #414754;
+  color: var(--on-surface-variant);
   margin-bottom: 8px;
 }
 
@@ -521,9 +516,9 @@ async function handleRegister() {
 
 .input-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   font-size: 20px;
-  color: #727785;
+  color: var(--outline);
   pointer-events: none;
   transition: color 0.2s;
 }
@@ -531,32 +526,36 @@ async function handleRegister() {
 .form-input {
   width: 100%;
   padding: 12px 48px 12px 44px;
-  border: 1px solid #c1c6d6;
+  border: 1px solid var(--outline-variant);
   border-radius: 8px;
   font-size: 14px;
-  color: #191c1e;
+  color: var(--on-surface);
   background: white;
   transition: all 0.2s;
   outline: none;
 }
 
-.form-input:focus {
-  border-color: #005bbf;
-  box-shadow: 0 0 0 2px rgba(0, 91, 191, 0.1);
+.form-input::placeholder {
+  color: var(--outline);
 }
 
-.form-input.input-error {
-  border-color: #ba1a1a;
+.form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
 }
 
 .form-input:focus ~ .input-icon,
-.form-input:focus + .input-icon {
-  color: #005bbf;
+.input-wrapper:focus-within .input-icon {
+  color: var(--primary);
+}
+
+.form-input.input-error {
+  border-color: var(--error);
 }
 
 .toggle-password {
   position: absolute;
-  right: 12px;
+  right: 10px;
   background: none;
   border: none;
   cursor: pointer;
@@ -564,15 +563,16 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--outline);
 }
 
 .toggle-password:hover {
-  color: #191c1e;
+  color: var(--on-surface);
 }
 
 .error-text {
   font-size: 12px;
-  color: #ba1a1a;
+  color: var(--error);
   margin-top: 4px;
   display: none;
 }
@@ -581,33 +581,9 @@ async function handleRegister() {
   display: block;
 }
 
-/* Form options */
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: #414754;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #005bbf;
-  cursor: pointer;
-}
-
 .forgot-link {
   font-size: 12px;
-  color: #005bbf;
+  color: var(--primary);
   text-decoration: none;
 }
 
@@ -615,11 +591,10 @@ async function handleRegister() {
   text-decoration: underline;
 }
 
-/* Submit button */
 .submit-btn {
   width: 100%;
   padding: 12px 16px;
-  background: #005bbf;
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -631,10 +606,11 @@ async function handleRegister() {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  margin-top: 12px;
 }
 
 .submit-btn:hover {
-  background: rgba(0, 91, 191, 0.9);
+  background: var(--primary-container);
 }
 
 .submit-btn:active {
@@ -646,94 +622,52 @@ async function handleRegister() {
   cursor: not-allowed;
 }
 
-/* Divider */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 16px 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: #c1c6d6;
-}
-
-.divider-text {
-  font-size: 12px;
-  color: #727785;
-}
-
-/* Social buttons */
-.social-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.social-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid #c1c6d6;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-size: 14px;
-  color: #414754;
-}
-
-.social-btn:hover {
-  background: #f2f4f7;
-}
-
-.social-btn .material-symbols-outlined {
-  font-size: 20px;
-}
-
-/* Agreement */
 .agreement {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .agreement input[type="checkbox"] {
   width: 16px;
   height: 16px;
   margin-top: 2px;
-  accent-color: #005bbf;
+  accent-color: var(--primary);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .agreement label {
-  font-size: 14px;
-  color: #414754;
+  font-size: 13px;
+  color: var(--on-surface-variant);
   line-height: 1.5;
 }
 
-/* Footer */
+.agreement .text-primary {
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.agreement .text-primary:hover {
+  text-decoration: underline;
+}
+
 .form-footer {
   text-align: center;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #c1c6d6;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--outline-variant);
 }
 
 .form-footer p {
   font-size: 14px;
-  color: #414754;
+  color: var(--on-surface-variant);
+  margin: 0;
 }
 
 .link-primary {
-  color: #005bbf;
+  color: var(--primary);
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
@@ -743,14 +677,21 @@ async function handleRegister() {
   text-decoration: underline;
 }
 
-/* Responsive */
+.text-primary {
+  color: var(--primary);
+}
+
+.hover\:underline:hover {
+  text-decoration: underline;
+}
+
+.hidden {
+  display: none !important;
+}
+
 @media (max-width: 900px) {
-  .brand-area {
-    display: none !important;
-  }
-  .form-area {
-    width: 100%;
-    padding: 24px;
+  .form-container {
+    padding: 32px 24px;
   }
 }
 </style>

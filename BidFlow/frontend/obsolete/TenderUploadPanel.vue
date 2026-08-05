@@ -1,4 +1,5 @@
-<!-- TenderUploadPanel.vue - Tender document upload with validation -->
+<!-- [OBSOLETE] 本组件使用 simulateUpload 假进度，未被任何页面引用。
+     实际上传功能已迁移至 ProjectDetailView.vue 内联实现。 -->
 <template>
   <div class="upload-panel">
     <h3 class="panel-title">
@@ -93,7 +94,7 @@ function handleChange(file, files) {
     percent: 0
   }))
 
-  // Simulate upload
+  // Simulate upload [OBSOLETE - 实际应调用后端上传接口]
   simulateUpload(files[files.length - 1].raw)
 }
 

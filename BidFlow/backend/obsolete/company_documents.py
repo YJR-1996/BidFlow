@@ -1,3 +1,5 @@
+"""[OBSOLETE] 本文件已迁移至 knowledge.py 路由。
+保留仅供历史参考，不再被主路由引用。"""
 from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List

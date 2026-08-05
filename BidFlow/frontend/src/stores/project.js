@@ -14,6 +14,7 @@ import {
   updateRequirement as updateRequirementApi,
 } from '@/api/projects'
 import { ElMessage } from 'element-plus'
+import { parseResponse, parseArray } from '@/utils/api'
 
 export const useProjectStore = defineStore('project', () => {
   const projects = ref([])
@@ -64,7 +65,8 @@ export const useProjectStore = defineStore('project', () => {
       status: item.status,
       requirement_count: item.requirement_count,
       risk_count: item.risk_count,
-      completionRate: item.completion_rate,
+      completionRate: item.completion_rate ?? 0,
+      readiness: item.readiness || null,
       created_at: item.created_at,
       updated_at: item.updated_at,
     }
@@ -74,9 +76,10 @@ export const useProjectStore = defineStore('project', () => {
     loading.value = true
     try {
       const res = await getProjectsApi(params)
-      projects.value = (res.data || []).map(normalizeProject)
-    } catch {
-      ElMessage.error('获取项目列表失败')
+      const list = parseArray(res)
+      projects.value = list.map(normalizeProject)
+    } catch (error) {
+      ElMessage.error(error.message || '获取项目列表失败')
     } finally {
       loading.value = false
     }
@@ -86,10 +89,11 @@ export const useProjectStore = defineStore('project', () => {
     loading.value = true
     try {
       const res = await getProjectApi(id)
-      currentProject.value = res.data ? normalizeProject(res.data) : null
+      const data = parseResponse(res)
+      currentProject.value = data ? normalizeProject(data) : null
       return currentProject.value
-    } catch {
-      ElMessage.error('获取项目详情失败')
+    } catch (error) {
+      ElMessage.error(error.message || '获取项目详情失败')
       return null
     } finally {
       loading.value = false
@@ -135,19 +139,19 @@ export const useProjectStore = defineStore('project', () => {
   async function uploadTender(id, formData) {
     try {
       const res = await uploadTenderApi(id, formData)
-      ElMessage.success('文件上传成功')
       return res.data
-    } catch {
-      ElMessage.error('文件上传失败')
+    } catch (error) {
+      ElMessage.error(error.message || '文件上传失败')
+      throw error
     }
   }
 
   async function fetchTenderDocs(projectId) {
     try {
       const res = await listTenderDocumentsApi(projectId)
-      tenderDocs.value = res.data || []
-    } catch {
-      ElMessage.error('获取招标文件列表失败')
+      tenderDocs.value = parseArray(res)
+    } catch (error) {
+      ElMessage.error(error.message || '获取招标文件列表失败')
     }
   }
 
@@ -174,6 +178,8 @@ export const useProjectStore = defineStore('project', () => {
       status: item.status,
       assignee_id: item.assignee_id,
       risk_level: item.risk_level,
+      response_status: item.response_status || null,
+      has_response: item.has_response || false,
       created_at: item.created_at,
       updated_at: item.updated_at,
     }
@@ -182,10 +188,11 @@ export const useProjectStore = defineStore('project', () => {
   async function fetchRequirements(projectId, params = {}) {
     try {
       const res = await getRequirementsApi(projectId, params)
-      requirements.value = (res.data || []).map(normalizeRequirement)
+      const list = parseArray(res)
+      requirements.value = list.map(normalizeRequirement)
       return requirements.value
-    } catch {
-      ElMessage.error('获取需求项列表失败')
+    } catch (error) {
+      ElMessage.error(error.message || '获取需求项列表失败')
       return []
     }
   }
@@ -214,8 +221,9 @@ export const useProjectStore = defineStore('project', () => {
     parseLoading.value = true
     try {
       const res = await parseTenderDocumentApi(docId)
-      ElMessage.success(`解析完成，提取了 ${res.data.requirement_count || 0} 条需求项`)
-      return res.data
+      const data = parseResponse(res, {})
+      ElMessage.success(`解析完成，提取了 ${data.requirement_count || 0} 条需求项`)
+      return data
     } catch (error) {
       ElMessage.error(error.response?.data?.message || '解析失败')
       throw error

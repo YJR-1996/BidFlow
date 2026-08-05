@@ -38,10 +38,11 @@ class ResponseAndComplianceTests(unittest.TestCase):
         self.assertEqual(1, client.calls)
 
     def test_p0_empty_response_is_high_risk(self):
+        # P0 + 无资料来源 → 按新规则拆分为 P0_SOURCE_MISSING（先补资料），仍为 high
         issue = ComplianceChecker().check(
             [RequirementSnapshot(1, "必须提供营业执照", "P0", "", [], "pending_review")]
         )[0]
-        self.assertEqual("P0_RESPONSE_MISSING", issue.rule_code)
+        self.assertEqual("P0_SOURCE_MISSING", issue.rule_code)
         self.assertEqual("high", issue.level)
 
     def test_report_counts_completion_and_risks(self):

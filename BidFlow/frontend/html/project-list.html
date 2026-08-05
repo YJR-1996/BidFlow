@@ -15,23 +15,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap');
-    
+
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       vertical-align: middle;
     }
-    
+
     body {
       font-family: 'Inter', sans-serif;
       margin: 0;
-      background-color: #f7f9fc; /* Level 0 Background from Style Guidance */
-    }
-
-    /* AI Glassmorphism Cue */
-    .glass-card {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(10px);
-      border: 1px solid #EBEEF5;
+      background-color: #f7f9fc;
     }
 
     /* Custom Scrollbar for the list */
@@ -45,7 +38,7 @@
       background: #c1c6d6;
       border-radius: 10px;
     }
-    
+
     /* Active Nav Interaction */
     .nav-item-active {
       transform: scale(0.98);
@@ -188,7 +181,6 @@
 <el-badge class="cursor-pointer" is-dot="">
 <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
 </el-badge>
-<button class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors">帮助支持</button>
 <div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
 <div class="text-right hidden sm:block">
 <p class="font-label-caps text-label-caps leading-none text-on-surface">Alex Rivera</p>
@@ -225,10 +217,6 @@
 <el-option label="已完成" value="已完成"></el-option>
 </el-select>
 </div>
-<el-button @click="handleNewProject" class="!px-6 !font-bold" style="background-color: #1a73e8;" type="primary">
-<template #icon=""><span class="material-symbols-outlined">add</span></template>
-              新建项目
-            </el-button>
 </div>
 <!-- Data Display -->
 <div class="p-0">
@@ -319,8 +307,9 @@
     const app = createApp({
       setup() {
         const activeNav = ref('项目管理');
-        const navTabs = ["项目管理", "文档分析", "合规检查", "系统设置"];
-        const navIcons = ["folder_managed", "analytics", "fact_check", "settings"];
+        // Updated nav items to match generated interface
+        const navTabs = ["项目管理", "企业文档", "新建项目"];
+        const navIcons = ["folder_managed", "archive", "add_circle"];
 
         const searchQuery = ref('');
         const tableSearch = ref('');
@@ -330,31 +319,24 @@
         const deleteDialogVisible = ref(false);
         const selectedProject = ref(null);
 
+        // Updated stats to match generated interface (5 cards)
         const stats = ref([
-          { label: '项目总数', value: '124', icon: 'inventory_2', isRisk: false },
-          { label: '进行中', value: '42', icon: 'pending_actions', isRisk: false },
-          { label: '已完成', value: '78', icon: 'task_alt', isRisk: false },
-          { label: '高风险', value: '12', icon: 'emergency_home', isRisk: true },
+          { label: '项目总数', value: '0', icon: 'inventory_2', isRisk: false },
+          { label: '准备中', value: '0', icon: 'pending_actions', isRisk: false },
+          { label: '审核中', value: '0', icon: 'fact_check', isRisk: false },
+          { label: '已完成', value: '0', icon: 'task_alt', isRisk: false },
+          { label: '待处理风险', value: '0', icon: 'warning', isRisk: true },
         ]);
 
         const projects = ref([]);
 
-        // Mock API Integration
+        // Empty data - no mock data as requested
         const fetchProjects = async () => {
           loading.value = true;
           setTimeout(() => {
-            projects.value = [
-              { id: 'BF-2023-001', name: '全球供应链审计 2024', status: '审核中', progress: 65, risks: 3, owner: 'Alex Rivera', ownerAvatar: 'https://i.pravatar.cc/150?u=a' },
-              { id: 'BF-2023-002', name: 'Z系列硬件采购', status: '准备中', progress: 20, risks: 0, owner: 'Sarah Chen', ownerAvatar: 'https://i.pravatar.cc/150?u=b' },
-              { id: 'BF-2023-003', name: '云基础设施升级', status: '已完成', progress: 100, risks: 0, owner: 'Mike Ross', ownerAvatar: 'https://i.pravatar.cc/150?u=c' },
-              { id: 'BF-2023-004', name: '合规性监管框架', status: '审核中', progress: 45, risks: 8, owner: 'Emma Wilson', ownerAvatar: 'https://i.pravatar.cc/150?u=d' },
-              { id: 'BF-2023-005', name: '可持续材料采购', status: '准备中', progress: 12, risks: 2, owner: 'David Wu', ownerAvatar: 'https://i.pravatar.cc/150?u=e' },
-              { id: 'BF-2023-006', name: '区域仓储物流', status: '已完成', progress: 100, risks: 0, owner: 'Alex Rivera', ownerAvatar: 'https://i.pravatar.cc/150?u=a' },
-              { id: 'BF-2023-007', name: '网络安全保险续约', status: '审核中', progress: 88, risks: 1, owner: 'Sarah Chen', ownerAvatar: 'https://i.pravatar.cc/150?u=b' },
-              { id: 'BF-2023-008', name: '员工健康与安全招标', status: '准备中', progress: 5, risks: 0, owner: 'Mike Ross', ownerAvatar: 'https://i.pravatar.cc/150?u=c' },
-            ];
+            projects.value = [];
             loading.value = false;
-          }, 800);
+          }, 300);
         };
 
         const filteredProjects = computed(() => {

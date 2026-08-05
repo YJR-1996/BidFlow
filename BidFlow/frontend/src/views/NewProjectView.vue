@@ -2,7 +2,7 @@
 <template>
   <div class="new-project-page">
     <div class="page-layout">
-      <!-- Left: Form Area -->
+      <!-- Left: Form Area (8 cols) -->
       <div class="form-area">
         <div class="form-card">
           <header class="form-header">
@@ -68,12 +68,15 @@
                 :rows="4"
                 placeholder="请输入项目背景及核心需求..."
                 :maxlength="500"
-                show-word-limit
+                resize="none"
               />
-              <p class="description-hint">
-                <span class="material-symbols-outlined">auto_awesome</span>
-                AI 将通过此描述优化文件生成质量
-              </p>
+              <div class="description-hint-row">
+                <p class="description-hint">
+                  <span class="material-symbols-outlined">tips_and_updates</span>
+                  AI 将通过此描述优化文件生成质量
+                </p>
+                <span class="char-count">{{ form.description.length }} / 500</span>
+              </div>
             </el-form-item>
 
             <!-- Actions -->
@@ -85,49 +88,54 @@
                 :loading="submitting"
                 @click="handleSubmit"
               >
-                {{ submitting ? '创建中...' : '提交项目' }}
+                {{ submitting ? '正在创建...' : '提交项目' }}
               </el-button>
-              <el-button size="large" @click="handleCancel">取消</el-button>
+              <el-button size="large" class="cancel-btn" @click="handleCancel">取消</el-button>
             </div>
           </el-form>
         </div>
       </div>
 
-      <!-- Right: Info Card -->
+      <!-- Right: Info/Process Card (4 cols) -->
       <div class="info-sidebar">
-        <!-- AI Assistant -->
+        <!-- AI Assistant Info Card -->
         <div class="info-card ai-card">
-          <div class="ai-header">
-            <div class="ai-icon-wrap">
-              <span class="material-symbols-outlined">bolt</span>
-            </div>
-            <div>
-              <h3>BidFlow AI 智囊</h3>
-              <p>实时指导与生成建议</p>
-            </div>
+          <div class="ai-decoration">
+            <span class="material-symbols-outlined">contract</span>
           </div>
-          <p>创建项目后，系统将立即开启：</p>
-          <ul class="ai-features">
-            <li>
-              <span class="material-symbols-outlined text-success-green">check_circle</span>
-              <span><strong>模版匹配：</strong>基于行业自动推荐招标模版</span>
-            </li>
-            <li>
-              <span class="material-symbols-outlined text-success-green">check_circle</span>
-              <span><strong>合规预警：</strong>自动对照最新行业法律法规</span>
-            </li>
-            <li>
-              <span class="material-symbols-outlined text-success-green">check_circle</span>
-              <span><strong>进度追踪：</strong>多维度跟进招标生命周期</span>
-            </li>
-          </ul>
+          <div class="ai-content">
+            <div class="ai-header">
+              <div class="ai-icon-wrap">
+                <span class="material-symbols-outlined">bolt</span>
+              </div>
+              <div>
+                <h3>BidFlow AI 智囊</h3>
+                <p>实时指导与生成建议</p>
+              </div>
+            </div>
+            <p class="ai-desc">创建项目后，系统将立即开启：</p>
+            <ul class="ai-features">
+              <li>
+                <span class="material-symbols-outlined text-success-green">check_circle</span>
+                <span><b>模版匹配：</b>基于行业自动推荐招标模版</span>
+              </li>
+              <li>
+                <span class="material-symbols-outlined text-success-green">check_circle</span>
+                <span><b>合规预警：</b>自动对照最新行业法律法规</span>
+              </li>
+              <li>
+                <span class="material-symbols-outlined text-success-green">check_circle</span>
+                <span><b>进度追踪：</b>多维度跟进招标生命周期</span>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <!-- Process Steps -->
+        <!-- Step Guide Card -->
         <div class="info-card">
           <h3>编制流程图</h3>
           <div class="process-steps">
-            <div v-for="(step, i) in steps" :key="i" class="process-step" :class="{ active: i <= activeStep, future: i > activeStep }">
+            <div v-for="(step, i) in steps" :key="i" class="process-step" :class="{ active: i <= activeStep }">
               <div class="step-dot" :class="{ filled: i <= activeStep }">
                 {{ i + 1 }}
               </div>
@@ -203,8 +211,7 @@ async function handleSubmit() {
     try {
       await projectStore.createProject(form)
       ElMessage.success('项目已成功创建！')
-      // Redirect to project list
-      router.push('/')
+      router.push('/projects')
     } catch {
       ElMessage.error('项目创建失败')
     } finally {
@@ -237,10 +244,11 @@ function handleCancel() {
 }
 
 .form-card {
-  background: white;
-  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .form-header {
@@ -252,11 +260,13 @@ function handleCancel() {
   font-weight: 700;
   color: var(--on-surface);
   margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .form-header p {
   font-size: 16px;
   color: var(--on-surface-variant);
+  margin: 0;
 }
 
 .form-row {
@@ -269,17 +279,30 @@ function handleCancel() {
   margin-bottom: 0;
 }
 
+.description-hint-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  margin-top: 4px;
+}
+
 .description-hint {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: var(--outline);
-  margin-top: 4px;
+  color: var(--on-surface-variant);
+  margin: 0;
 }
 
 .description-hint .material-symbols-outlined {
   font-size: 16px;
+}
+
+.char-count {
+  font-size: 12px;
+  color: var(--on-surface-variant);
 }
 
 .form-actions {
@@ -288,13 +311,20 @@ function handleCancel() {
   margin-top: 32px;
   padding-top: 24px;
   border-top: 1px solid var(--outline-variant);
+  align-items: center;
 }
 
 .submit-btn {
   flex: 1;
-  height: 44px;
+  height: 48px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.cancel-btn {
+  height: 48px;
+  padding: 0 32px;
+  font-weight: 500;
 }
 
 /* Sidebar */
@@ -307,23 +337,45 @@ function handleCancel() {
 }
 
 .info-card {
-  background: white;
-  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .info-card h3 {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--on-surface);
   margin-bottom: 20px;
 }
 
 /* AI card */
 .ai-card {
-  background: rgba(26, 115, 232, 0.02);
+  background: rgba(26, 115, 232, 0.05);
   border-color: rgba(26, 115, 232, 0.2);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 15px rgba(26, 115, 232, 0.05);
+}
+
+.ai-decoration {
+  position: absolute;
+  right: -16px;
+  bottom: -16px;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.ai-decoration .material-symbols-outlined {
+  font-size: 96px;
+  color: var(--primary);
+}
+
+.ai-content {
+  position: relative;
+  z-index: 1;
 }
 
 .ai-header {
@@ -362,7 +414,7 @@ function handleCancel() {
   margin: 0;
 }
 
-.ai-card p {
+.ai-desc {
   font-size: 14px;
   color: var(--on-surface);
   margin-bottom: 16px;
@@ -382,12 +434,12 @@ function handleCancel() {
   align-items: flex-start;
   gap: 8px;
   font-size: 14px;
-  color: var(--on-surface-variant);
+  color: var(--on-surface);
+  line-height: 1.5;
 }
 
-.text-success-green {
-  color: #34a853;
-  font-size: 20px !important;
+.ai-features li b {
+  font-weight: 700;
 }
 
 /* Process steps */
@@ -396,12 +448,13 @@ function handleCancel() {
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding-left: 4px;
 }
 
 .process-steps::before {
   content: '';
   position: absolute;
-  left: 15px;
+  left: 11px;
   top: 16px;
   bottom: 16px;
   width: 2px;
@@ -420,8 +473,8 @@ function handleCancel() {
 }
 
 .step-dot {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--surface-container-highest);
   border: 1px solid var(--outline-variant);
@@ -443,17 +496,18 @@ function handleCancel() {
 }
 
 .process-step.active .step-dot {
-  box-shadow: 0 0 0 4px var(--surface);
+  box-shadow: 0 0 0 4px var(--surface-container-lowest);
 }
 
 .step-info h4 {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--outline);
   margin: 0 0 2px;
 }
 
 .process-step.active .step-info h4 {
+  font-weight: 700;
   color: var(--on-surface);
 }
 
@@ -469,7 +523,7 @@ function handleCancel() {
 
 /* Tip card */
 .tip-card {
-  background: var(--surface-container-low);
+  background: var(--surface-gray);
 }
 
 .tip-header {
@@ -480,8 +534,6 @@ function handleCancel() {
   font-weight: 700;
   color: var(--on-surface);
   margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .tip-card p {

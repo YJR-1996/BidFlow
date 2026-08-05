@@ -1,4 +1,7 @@
+import logging
+
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -10,6 +13,9 @@ from app.models.compliance_issue import ComplianceIssue
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectListItem, ProjectDetail
 from app.schemas.common import ApiResponse
 from app.api.deps import get_current_user, get_project_or_404_sync
+from app.services.readiness_service import readiness_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -32,15 +38,35 @@ def list_projects(
     result = []
     for project in projects:
         req_count = db.query(Requirement).filter(Requirement.project_id == project.id).count()
-        risk_count = db.query(ComplianceIssue).filter(
-            ComplianceIssue.project_id == project.id,
-            ComplianceIssue.level.in_(["高", "中"]),
-        ).count()
-        completed = db.query(Requirement).filter(
-            Requirement.project_id == project.id,
-            Requirement.status == "已完成",
-        ).count()
-        completion_rate = round(completed / req_count * 100, 1) if req_count > 0 else 0.0
+
+        try:
+            # 统一口径：待处理风险 = 高/中 + status='未处理'
+            # 与合规报告、详情顶部 high_risk_pending 语义一致
+            risk_count = db.query(ComplianceIssue).filter(
+                ComplianceIssue.project_id == project.id,
+                ComplianceIssue.level.in_(["高", "中"]),
+                ComplianceIssue.status == "未处理",
+            ).count()
+        except OperationalError as e:
+            if "Unknown column" in str(e):
+                logger.warning(
+                    "[projects] 数据库表结构缺失列: %s。"
+                    "请运行 python -m app.scripts.migrate_compliance_source 修复", e
+                )
+                risk_count = 0
+            else:
+                raise
+
+        # 使用 readiness_service 计算综合就绪度（单一数据源）
+        try:
+            r = readiness_service.calculate(project.id, db)
+            completion_rate = r.overall
+        except OperationalError as e:
+            if "Unknown column" in str(e):
+                logger.warning("[projects] 就绪度计算遇到缺列问题: %s", e)
+                completion_rate = 0.0
+            else:
+                raise
 
         item = ProjectListItem.model_validate(project)
         item.requirement_count = req_count
@@ -74,8 +100,27 @@ def create_project(
 
 
 @router.get("/{project_id}", response_model=ApiResponse[ProjectDetail])
-def get_project(project: BidProject = Depends(get_project_or_404_sync)):
-    return ApiResponse(data=project)
+def get_project(
+    project: BidProject = Depends(get_project_or_404_sync),
+    db: Session = Depends(get_db),
+):
+    """获取项目详情，含三维就绪度数据"""
+    r = readiness_service.calculate(project.id, db)
+    detail = ProjectDetail.model_validate(project)
+    detail.completion_rate = r.overall
+    detail.readiness = {
+        "base_rate": r.base_rate,
+        "quality_rate": r.quality_rate,
+        "compliance_rate": r.compliance_rate,
+        "overall": r.overall,
+        "has_response": r.has_response,
+        "has_source": r.has_source,
+        "high_risk_pending": r.high_risk_pending,
+        "medium_risk_pending": r.medium_risk_pending,
+        "total_risk_pending": r.total_risk_pending,
+        "can_submit": r.can_submit,
+    }
+    return ApiResponse(data=detail)
 
 
 @router.patch("/{project_id}", response_model=ApiResponse[ProjectDetail])

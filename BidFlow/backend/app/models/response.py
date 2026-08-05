@@ -4,6 +4,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, String
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.models.types import UTCDateTime
 
 
 class Response(Base):
@@ -15,7 +16,7 @@ class Response(Base):
     edited_content = Column(Text)
     source_refs = Column(Text)
     status = Column(String(20), default="草稿")
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(UTCDateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     requirement = relationship("Requirement", back_populates="responses")
 

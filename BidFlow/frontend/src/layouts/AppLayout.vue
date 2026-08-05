@@ -4,26 +4,34 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h1 class="sidebar-logo">BidFlow AI</h1>
-        <p class="sidebar-subtitle">企业采购平台</p>
+        <div class="sidebar-brand">
+          <span class="material-symbols-outlined sidebar-logo-icon">bid_landscape</span>
+          <div>
+            <h1 class="sidebar-logo">BidFlow</h1>
+            <p class="sidebar-subtitle">企业采购管理平台</p>
+          </div>
+        </div>
       </div>
       <nav class="sidebar-nav">
-        <a
-          v-for="(item, index) in navItems"
+        <router-link
+          v-for="item in navItems"
           :key="item.name"
-          :class="['nav-item', { active: route.name === item.name }]"
-          :to="{ name: item.name }"
-          @click="activeNav = item.name"
+          :class="['nav-item', { active: isNavActive(item) }]"
+          :to="item.path"
         >
           <span class="nav-icon material-symbols-outlined">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
-        </a>
+        </router-link>
       </nav>
       <div class="sidebar-footer">
-        <el-button class="new-project-btn" @click="$router.push({ name: 'NewProject' })">
-          <template #icon><span class="material-symbols-outlined">add</span></template>
-          新建项目
-        </el-button>
+        <button class="btn-new-project" @click="$router.push('/new-project')">
+          <span class="material-symbols-outlined">add</span>
+          新建投标项目
+        </button>
+        <router-link v-for="item in footerItems" :key="item.name" :to="item.path" class="nav-item footer-nav">
+          <span class="nav-icon material-symbols-outlined">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </router-link>
       </div>
     </aside>
 
@@ -32,36 +40,53 @@
       <!-- Top header -->
       <header class="top-header">
         <div class="header-left">
-          <span class="header-title">BidFlow</span>
-          <el-input
-            class="header-search"
-            placeholder="搜索项目、文档或合规文件..."
-            v-model="searchQuery"
-            clearable
-          >
-            <template #prefix>
-              <span class="material-symbols-outlined">search</span>
-            </template>
-          </el-input>
+          <button v-if="showBack" class="header-back" @click="$router.back()">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h2 class="header-page-title">{{ pageTitle }}</h2>
         </div>
         <div class="header-right">
-          <el-badge :is-dot="true">
-            <span class="header-icon material-symbols-outlined">notifications</span>
-          </el-badge>
-          <span class="header-icon material-symbols-outlined" @click="$router.push({ name: 'ComplianceReport', params: { projectId: currentProjectId } })">analytics</span>
-          <div class="user-info">
-            <div class="user-text">
-              <p class="user-name">{{ authStore.user?.username || '用户' }}</p>
-              <p class="user-role">采购主管</p>
-            </div>
-            <el-avatar :size="36" class="user-avatar">
-              {{ (authStore.user?.username || 'U').charAt(0).toUpperCase() }}
-            </el-avatar>
+          <div class="header-search-wrap">
+            <el-input
+              v-if="showSearch"
+              class="header-search"
+              placeholder="搜索项目数据..."
+              v-model="searchQuery"
+            >
+              <template #prefix>
+                <span class="material-symbols-outlined">search</span>
+              </template>
+            </el-input>
           </div>
-          <el-button text @click="handleLogout">
-            <span class="material-symbols-outlined">logout</span>
-            退出
-          </el-button>
+          <div class="header-actions">
+            <el-badge :is-dot="true" class="header-badge">
+              <span class="material-symbols-outlined">notifications</span>
+            </el-badge>
+            <el-dropdown trigger="click" @command="handleUserCommand">
+              <div class="user-info">
+                <div class="user-text">
+                  <p class="user-name">{{ authStore.user?.username || '用户' }}</p>
+                  <p class="user-role">项目主管</p>
+                </div>
+                <el-avatar :size="32" class="user-avatar">
+                  {{ (authStore.user?.username || 'U').charAt(0).toUpperCase() }}
+                </el-avatar>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="profile">
+                    <span class="material-symbols-outlined">person</span>个人资料
+                  </el-dropdown-item>
+                  <el-dropdown-item command="settings">
+                    <span class="material-symbols-outlined">settings</span>设置
+                  </el-dropdown-item>
+                  <el-dropdown-item divided command="logout">
+                    <span class="material-symbols-outlined">logout</span>退出登录
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
       </header>
 
@@ -74,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
@@ -83,27 +108,47 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const activeNav = ref('ProjectList')
 const searchQuery = ref('')
 
-// Current project ID for compliance report link
-const currentProjectId = computed(() => route.params.id)
-
 const navItems = [
-  { name: 'ProjectList', label: '项目管理', icon: 'folder_managed' },
-  { name: 'CompanyMaterials', label: '企业文档', icon: 'archive' },
-  { name: 'NewProject', label: '新建项目', icon: 'add_circle' }
+  { name: 'ProjectList', label: '项目管理', icon: 'folder_open', path: '/projects' },
+  { name: 'CompanyMaterials', label: '资料库', icon: 'description', path: '/company-materials' },
+  { name: 'Compliance', label: '合规核查', icon: 'fact_check', path: '/compliance' },
+  { name: 'Analytics', label: '统计报表', icon: 'analytics', path: '/analytics' },
 ]
 
-// Sync active nav with route changes
-watch(() => route.name, (newName) => {
-  if (newName) activeNav.value = newName
+const footerItems = [
+  { name: 'Settings', label: '设置', icon: 'settings', path: '/' },
+  { name: 'Help', label: '帮助支持', icon: 'help', path: '/' },
+]
+
+const pageTitle = computed(() => {
+  const title = route.meta?.title
+  if (title) return title
+  const match = route.matched.find(m => m.meta?.title)
+  return match?.meta?.title || 'BidFlow'
 })
 
-function handleLogout() {
-  authStore.logout()
-  ElMessage.success('已退出登录')
-  router.push('/login')
+const showBack = computed(() => route.name === 'ProjectDetail')
+const showSearch = computed(() => route.name !== 'Login' && route.name !== 'Register')
+
+function isNavActive(item) {
+  if (item.name === 'ProjectList') return route.name === 'ProjectList' || route.name === 'ProjectDetail'
+  if (item.name === 'CompanyMaterials') return route.name === 'CompanyMaterials'
+  if (item.name === 'Compliance') return route.name === 'Compliance'
+  if (item.name === 'Analytics') return route.name === 'Analytics'
+  return false
+}
+
+function handleUserCommand(command) {
+  if (command === 'logout') {
+    authStore.logout()
+    router.push('/login')
+  } else if (command === 'profile') {
+    ElMessage.info('个人资料功能开发中')
+  } else if (command === 'settings') {
+    ElMessage.info('设置功能开发中')
+  }
 }
 </script>
 
@@ -113,7 +158,6 @@ function handleLogout() {
   min-height: 100vh;
 }
 
-/* Sidebar */
 .sidebar {
   width: 260px;
   height: 100vh;
@@ -121,57 +165,72 @@ function handleLogout() {
   left: 0;
   top: 0;
   background: var(--surface-container-lowest);
-  border-right: 1px solid var(--outline-variant);
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   padding: 24px 16px;
-  z-index: 60;
+  z-index: 50;
 }
 
 .sidebar-header {
-  margin-bottom: 40px;
+  margin-bottom: 24px;
   padding: 0 8px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo-icon {
+  color: var(--primary);
+  font-size: 28px;
 }
 
 .sidebar-logo {
   font-size: 24px;
   font-weight: 700;
   color: var(--primary);
-  line-height: 1.2;
+  line-height: 1.1;
+  margin: 0;
 }
 
 .sidebar-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  margin: 0;
 }
 
 .sidebar-nav {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-radius: 8px;
   text-decoration: none;
   color: var(--on-surface-variant);
   transition: all 0.2s;
+  font-size: 14px;
 }
 
 .nav-item:hover {
   background: var(--surface-container-high);
+  color: var(--on-surface);
 }
 
 .nav-item.active {
   color: var(--primary);
-  font-weight: 700;
-  background: rgba(26, 115, 232, 0.1);
+  font-weight: 600;
+  background: var(--surface-container-low);
+  border-left: 4px solid var(--primary);
+  padding-left: 8px;
 }
 
 .nav-icon {
@@ -184,67 +243,93 @@ function handleLogout() {
 }
 
 .sidebar-footer {
-  padding: 0 8px;
-  margin-top: 16px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 8px 0;
+  border-top: 1px solid var(--border-subtle);
 }
 
-.new-project-btn {
+.btn-new-project {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
+  padding: 12px 16px;
+  background: var(--primary-container);
+  color: white;
+  border: none;
   border-radius: 12px;
-  height: 44px;
+  font-size: 14px;
   font-weight: 600;
-  background-color: var(--primary-container);
-  border-color: var(--primary-container);
-  color: var(--on-primary-container);
+  cursor: pointer;
+  transition: transform 0.15s;
+  margin-bottom: 16px;
 }
 
-/* Main area */
+.btn-new-project:hover {
+  opacity: 0.9;
+}
+
+.btn-new-project:active {
+  transform: scale(0.95);
+}
+
+.footer-nav {
+  padding: 8px 12px;
+}
+
 .main-area {
   margin-left: 260px;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: var(--surface-gray);
 }
 
-/* Top header */
 .top-header {
   height: 64px;
   position: fixed;
   top: 0;
   right: 0;
   left: 260px;
-  z-index: 50;
-  background: var(--surface);
-  border-bottom: 1px solid var(--outline-variant);
+  z-index: 40;
+  background: var(--surface-container-lowest);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
+  gap: 12px;
 }
 
-.header-title {
-  font-size: 24px;
-  font-weight: 700;
+.header-back {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
   color: var(--on-surface);
+  display: flex;
+  align-items: center;
 }
 
-.header-search {
-  max-width: 400px;
+.header-back:hover {
+  background: var(--surface-container-low);
 }
 
-.header-search :deep(.el-input__wrapper) {
-  border-radius: 9999px;
-  background: var(--surface-container);
-  box-shadow: none !important;
+.header-page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--on-surface);
 }
 
 .header-right {
@@ -253,15 +338,35 @@ function handleLogout() {
   gap: 24px;
 }
 
-.header-icon {
-  cursor: pointer;
-  font-size: 24px;
-  color: var(--on-surface-variant);
-  transition: color 0.2s;
+.header-search-wrap {
+  flex: 1;
+  max-width: 280px;
 }
 
-.header-icon:hover {
-  color: var(--primary);
+.header-search {
+  max-width: 280px;
+}
+
+.header-search :deep(.el-input__wrapper) {
+  background: var(--surface-gray);
+  border: none;
+  border-radius: 8px;
+  box-shadow: none !important;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-badge {
+  cursor: pointer;
+}
+
+.header-badge .material-symbols-outlined {
+  font-size: 22px;
+  color: var(--on-surface-variant);
 }
 
 .user-info {
@@ -269,7 +374,8 @@ function handleLogout() {
   align-items: center;
   gap: 12px;
   padding-left: 16px;
-  border-left: 1px solid var(--outline-variant);
+  border-left: 1px solid var(--border-subtle);
+  cursor: pointer;
 }
 
 .user-text {
@@ -281,11 +387,13 @@ function handleLogout() {
   font-weight: 600;
   color: var(--on-surface);
   line-height: 1.2;
+  margin: 0;
 }
 
 .user-role {
-  font-size: 11px;
-  color: var(--outline);
+  font-size: 10px;
+  color: var(--on-surface-variant);
+  margin: 0;
 }
 
 .user-avatar {
@@ -294,16 +402,17 @@ function handleLogout() {
   font-weight: 600;
 }
 
-/* Content area */
 .content-area {
   padding-top: 96px;
   padding-bottom: 48px;
   padding-left: 32px;
   padding-right: 32px;
   flex: 1;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-/* Element Plus overrides */
 :deep(.el-button--primary) {
   --el-button-bg-color: var(--primary);
   --el-button-border-color: var(--primary);
@@ -311,13 +420,13 @@ function handleLogout() {
 }
 
 :deep(.el-tag--success) {
-  --el-tag-bg-color: rgba(40, 108, 0, 0.1);
-  --el-tag-text-color: var(--tertiary);
+  --el-tag-bg-color: rgba(52, 168, 83, 0.1);
+  --el-tag-text-color: var(--success-green);
 }
 
 :deep(.el-tag--warning) {
   --el-tag-bg-color: rgba(251, 188, 4, 0.1);
-  --el-tag-text-color: var(--warning-amber, #fbbc04);
+  --el-tag-text-color: #b06000;
 }
 
 :deep(.el-tag--danger) {
@@ -326,7 +435,7 @@ function handleLogout() {
 }
 
 :deep(.el-tag--info) {
-  --el-tag-bg-color: rgba(94, 94, 96, 0.1);
-  --el-tag-text-color: var(--secondary);
+  --el-tag-bg-color: rgba(43, 91, 181, 0.1);
+  --el-tag-text-color: var(--primary);
 }
 </style>

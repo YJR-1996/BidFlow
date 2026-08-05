@@ -54,8 +54,12 @@ class TenderRequirementExtractorService:
             text_blocks = self._group_text(parsed_paragraphs)
 
             for block in text_blocks:
-                category = self._classify_category(block["text"])
-                priority = self._classify_priority(block["text"], category)
+                # 分类/优先级用「所属章节标题 + 条款文本」联合判定，
+                # 保证独立条款继承章节上下文（如"资格要求"章下的条款不被误判为"其他/P2"）
+                section = block.get("section") or ""
+                combined = (section + "\n" + block["text"]) if section else block["text"]
+                category = self._classify_category(combined)
+                priority = self._classify_priority(combined, category)
 
                 requirements_data.append({
                     "project_id": project_id,
@@ -85,36 +89,73 @@ class TenderRequirementExtractorService:
             raise BusinessException(message=f"需求提取失败: {str(e)}")
 
     def _group_text(self, paragraphs: List[Dict]) -> List[Dict]:
+        """把解析出的段落按「章节标题 / 独立条款」切块。
+
+        章节标题（一、/第X章/1. 等）→ 新块；
+        独立条款（动作动词开头+短句+标点结尾 / xxx：N分 / 编号前缀）→ 新块；
+        其余说明性文字 → 并入当前块。
+        每个块附带 section（所属章节标题），供分类/优先级判定继承上下文。
+        """
         if not paragraphs:
             return []
 
         blocks = []
         current_text = ""
         current_ref = ""
+        current_section = ""  # 当前所属章节标题（分类继承用，遇新标题才变）
+        pending_heading = ""  # 待拼到下一条内容前的标题前缀（消费一次）
+        pending_ref = ""
 
         for para in paragraphs:
-            text = para["text"]
             ref = para["source_ref"]
+            # 修复：段落内可能混有「标题行 + 多条条款行」（txt 按 \n\n 分段时常见），
+            # 逐行判定，避免整段既非 heading 又非 clause → 被并入说明性文字导致需求丢失
+            for text in para["text"].split("\n"):
+                text = text.strip()
+                if not text:
+                    continue
 
-            if self._is_heading(text) or len(current_text) > 300:
-                if current_text.strip():
-                    blocks.append({
-                        "text": current_text.strip(),
-                        "source_ref": current_ref,
-                    })
-                current_text = text
-                current_ref = ref
-            else:
-                if current_text:
-                    current_text += "\n"
-                current_text += text
-                if not current_ref:
-                    current_ref = ref
+                if self._is_heading(text):
+                    # 章节标题：flush 当前块，标题作为前缀 + 更新分类上下文
+                    if current_text.strip():
+                        blocks.append({
+                            "text": current_text.strip(),
+                            "source_ref": current_ref,
+                            "section": current_section,
+                        })
+                    current_text = ""
+                    current_ref = ""
+                    pending_heading = text
+                    pending_ref = ref
+                    current_section = text
+                elif self._is_clause(text):
+                    # 独立条款：flush 当前块，用「标题 + 条款」开新块（section 持续继承）
+                    if current_text.strip():
+                        blocks.append({
+                            "text": current_text.strip(),
+                            "source_ref": current_ref,
+                            "section": current_section,
+                        })
+                    current_text = (pending_heading + "\n" if pending_heading else "") + text
+                    current_ref = pending_ref or ref
+                    pending_heading = ""
+                else:
+                    # 说明性文字：若待处理标题存在则先落位，再并入
+                    if not current_text.strip() and pending_heading:
+                        current_text = pending_heading
+                        current_ref = pending_ref
+                        pending_heading = ""
+                    if current_text:
+                        current_text += "\n" + text
+                    else:
+                        current_text = text
+                        current_ref = ref
 
         if current_text.strip():
             blocks.append({
                 "text": current_text.strip(),
                 "source_ref": current_ref,
+                "section": current_section,
             })
 
         return blocks
@@ -132,6 +173,35 @@ class TenderRequirementExtractorService:
         for pattern in patterns:
             if re.match(pattern, text.strip()):
                 return True
+        return False
+
+    def _is_clause(self, text: str) -> bool:
+        """判断段落是否是一条独立条款（区别于章节标题和说明性续文）。"""
+        t = text.strip()
+        if not t or len(t) > 200:
+            return False
+
+        # 评分项模式：xxx：N分 / xxx：N 分
+        if re.match(r"^.+[:：]\s*\d+\s*分", t):
+            return True
+
+        # 数字/括号编号前缀：1. 1、 （1） ①
+        if re.match(r"^\d+[.、．)]", t):
+            return True
+        if re.match(r"^[（(]\d+[）)]", t):
+            return True
+
+        # 动作动词开头 + 短句 + 分号/句号结尾（典型条款形态）
+        verb_prefixes = (
+            "具有", "具备", "提供", "在", "每", "近", "所投", "投标", "合同",
+            "产品", "保证", "承担", "负责", "须", "应", "不得", "鼓励", "接受",
+            "完成", "确保", "满足", "符合", "达到", "包含", "包括", "所有",
+            "按", "按照", "遵守", "依据", "采购", "交付", "供货", "配备",
+            "采用", "支持", "能", "可", "无", "未",
+        )
+        if t.startswith(verb_prefixes) and re.search(r"[；。;.]+$", t):
+            return True
+
         return False
 
     def _classify_category(self, text: str) -> str:

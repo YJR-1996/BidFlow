@@ -1,0 +1,69 @@
+/* utilities.css - Global utility classes for BidFlow */
+
+/* Opacity modifiers */
+.bg-error\/10 { background-color: rgba(186, 26, 26, 0.1); }
+.bg-error\/5 { background-color: rgba(186, 26, 26, 0.05); }
+.bg-success-green\/10 { background-color: rgba(52, 168, 83, 0.1); }
+.bg-success-green\/5 { background-color: rgba(52, 168, 83, 0.05); }
+.bg-warning-amber\/10 { background-color: rgba(251, 188, 4, 0.1); }
+.bg-warning-amber\/5 { background-color: rgba(251, 188, 4, 0.05); }
+.bg-primary\/10 { background-color: rgba(26, 115, 232, 0.1); }
+.bg-primary\/5 { background-color: rgba(26, 115, 232, 0.05); }
+.bg-surface-container { background-color: var(--surface-container); }
+
+/* Text utilities */
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.font-medium { font-weight: 500; }
+.text-sm { font-size: 12px; }
+.text-base { font-size: 14px; }
+.text-lg { font-size: 16px; }
+.text-xl { font-size: 20px; }
+
+/* Spacing utilities */
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.gap-8 { gap: 32px; }
+
+/* Layout utilities */
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+.flex-shrink-0 { flex-shrink: 0; }
+
+/* Border radius */
+.rounded-sm { border-radius: 4px; }
+.rounded { border-radius: 8px; }
+.rounded-lg { border-radius: 12px; }
+.rounded-xl { border-radius: 16px; }
+.rounded-full { border-radius: 9999px; }
+
+/* Animation */
+.animate-spin { animation: spin 1s linear infinite; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotate-180 { transform: rotate(180deg); }
+
+/* Text truncation */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive visibility helpers */
+.hidden-mobile { display: block; }
+.visible-mobile { display: none; }
+
+@media (max-width: 768px) {
+  .hidden-mobile { display: none; }
+  .visible-mobile { display: block; }
+}

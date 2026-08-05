@@ -1,29 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-
-
-@pytest.fixture
-def client():
-    """创建测试客户端"""
-    return TestClient(app)
-
-
-@pytest.fixture
-def auth_headers(client: TestClient, request):
-    """通过注册/登录获取测试 token"""
-    username = request.node.name.replace("test_", "").replace("_", "")[:20]
-    password = "testpassword123"
-
-    # 先注册
-    client.post("/api/auth/register", json={"username": username, "password": password})
-
-    # 再登录获取 token
-    resp = client.post("/api/auth/login", json={"username": username, "password": password})
-    token = resp.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
 
 class TestAuth:
     """认证模块测试"""

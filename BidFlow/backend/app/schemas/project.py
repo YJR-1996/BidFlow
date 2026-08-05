@@ -47,3 +47,5 @@ class ProjectDetail(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    completion_rate: float = 0.0
+    readiness: Optional[dict] = None

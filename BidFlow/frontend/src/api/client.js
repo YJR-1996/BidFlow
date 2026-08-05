@@ -7,11 +7,16 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' }
 })
 
-// Request interceptor: inject token
+// Request interceptor: inject token + auto multipart for FormData
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  // 自动检测 FormData：设 multipart 让 axios 加 boundary（之前因默认 application/json
+  // 导致 FormData 被 JSON 序列化，后端 Form() 拿不到字段，使用默认值）
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    delete config.headers['Content-Type']  // 让 axios + XHR 自动加 boundary
   }
   return config
 })
@@ -26,8 +31,9 @@ api.interceptors.response.use(
     if (error.response) {
       const { status, data } = error.response
       if (status === 401) {
-        localStorage.removeItem('access_token')
-        window.location.href = '/login'
+        localStorage.removeItem('token')
+        // 路由使用 createWebHashHistory，跳转需带 hash 前缀，否则会落到空白页
+        window.location.href = '/#/login'
       }
       // Show error message from backend
       let message = '请求失败'

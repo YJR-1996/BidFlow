@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, T
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.models.types import UTCDateTime
 
 
 class ComplianceIssue(Base):
@@ -17,7 +18,8 @@ class ComplianceIssue(Base):
     description = Column(Text)
     suggestion = Column(Text)
     status = Column(String(20), default="未处理")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    source = Column(String(20), default="rule")  # rule=规则引擎, semantic=语义合规Agent
+    created_at = Column(UTCDateTime, default=datetime.utcnow)
 
     project = relationship("BidProject", back_populates="compliance_issues")
     requirement = relationship("Requirement", back_populates="compliance_issues")

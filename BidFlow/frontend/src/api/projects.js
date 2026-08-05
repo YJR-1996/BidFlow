@@ -80,3 +80,19 @@ export async function updateRequirement(requirementId, updates) {
   const data = await api.patch(`/requirements/${requirementId}`, updates)
   return data
 }
+
+// Batch delete requirements for a project
+export async function batchDeleteRequirementsApi(projectId, ids) {
+  const data = await api.delete(`/requirements/projects/${projectId}/batch`, { data: { ids } })
+  return data
+}
+
+// Batch update requirement statuses for a project
+export async function batchUpdateStatusApi(projectId, status, ids) {
+  const payload = { status }
+  if (ids && ids.length) {
+    payload.ids = ids
+  }
+  const data = await api.patch(`/requirements/projects/${projectId}/batch-status`, payload)
+  return data
+}

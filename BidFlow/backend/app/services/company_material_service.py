@@ -22,8 +22,17 @@ class CompanyMaterialService:
         db: Session,
         user: User,
         file,
+        category: str = None,
+        tags: str = None,
+        project_id: int = None,
+        scope: str = "company",
     ) -> CompanyDocument:
-        """上传公司资料并处理"""
+        """上传公司资料并处理
+
+        Args:
+            scope: "company" = 公司级共享, "project" = 项目级专属
+            project_id: scope="project" 时绑定的项目 ID
+        """
         # 1. 验证文件
         original_filename = file.filename or ""
         if not original_filename:
@@ -45,13 +54,17 @@ class CompanyMaterialService:
         with open(file_path, "wb") as f:
             f.write(content)
 
-        # 3. 创建数据库记录
+        # 3. 创建数据库记录 (含 scope)
         doc = CompanyDocument(
             owner_id=user.id,
             filename=original_filename,
             file_path=str(file_path),
             file_type=ext,
+            category=category,
+            tags=tags,
             status="pending",
+            scope=scope,
+            project_id=project_id if scope == "project" else None,
         )
         db.add(doc)
         db.flush()
@@ -72,27 +85,29 @@ class CompanyMaterialService:
             # 切块
             chunks = text_chunker_service.chunk(paragraphs)
 
-            # 写入向量存储
+            # 写入向量存储 (含 scope)
             if chunks:
                 vector_store_service.upsert(
-                    project_id=None,  # 全局资料
+                    project_id=project_id,
                     chunks=chunks,
                     metadata={
                         "doc_id": doc.id,
                         "filename": original_filename,
+                        "source_ref": f"{original_filename}#{doc.id}",
                     },
+                    scope=scope,
                 )
 
             doc.status = "success"
+            db.commit()
+            db.refresh(doc)
+            return doc
         except Exception as e:
             doc.status = "failed"
             doc.error_message = str(e)
-            db.flush()
+            db.commit()  # 必须先提交，否则抛出异常时事务回滚会撤销状态更新
+            db.refresh(doc)
             raise BusinessException(message=f"资料处理失败: {str(e)}")
-
-        db.commit()
-        db.refresh(doc)
-        return doc
 
     def list_by_owner(
         self,

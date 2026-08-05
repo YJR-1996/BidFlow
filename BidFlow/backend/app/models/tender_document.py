@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.models.types import UTCDateTime
 
 
 class TenderDocument(Base):
@@ -17,8 +18,8 @@ class TenderDocument(Base):
     file_size = Column(Integer)
     status = Column(String(20), default="pending")
     error_message = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(UTCDateTime, default=datetime.utcnow)
+    updated_at = Column(UTCDateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     project = relationship("BidProject", back_populates="tender_documents")
     requirements = relationship("Requirement", back_populates="tender_document", cascade="all, delete-orphan")
