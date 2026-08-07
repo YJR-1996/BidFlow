@@ -63,7 +63,7 @@
 
     <!-- Table -->
     <el-table
-      :data="filteredRequirements"
+      :data="pagedRequirements"
       v-loading="loading"
       class="req-table"
       @selection-change="handleSelectionChange"
@@ -72,7 +72,7 @@
       <el-table-column type="selection" width="48" align="center" />
 
       <el-table-column label="编号" width="64" align="center">
-        <template #default="scope">{{ String(scope.$index + 1).padStart(3, '0') }}</template>
+        <template #default="scope">{{ String((page - 1) * PAGE_SIZE + scope.$index + 1).padStart(3, '0') }}</template>
       </el-table-column>
 
       <el-table-column label="类别" width="100">
@@ -183,7 +183,14 @@
         <span>待处理: <strong class="text-warning-amber">{{ pendingCount }}</strong></span>
         <span v-if="matchSummary">已匹配: <strong class="text-primary">{{ matchSummary.matched }}</strong></span>
       </div>
-      <span class="footer-page">共 {{ Math.ceil(requirements.length / 20) }} 页</span>
+      <el-pagination
+        v-if="filteredRequirements.length > PAGE_SIZE"
+        v-model:current-page="page"
+        background
+        layout="prev, pager, next"
+        :total="filteredRequirements.length"
+        :page-size="PAGE_SIZE"
+      />
     </div>
   </div>
 </template>
@@ -213,6 +220,20 @@ const analyzing = ref(false)
 const batchGenerating = ref(false)
 const selected = ref([])
 const matchData = ref(null)
+
+// ---- 分页（前端 slice：数据量当前为项目级几十条，全量加载无压力；分页降低 DOM 渲染量）----
+const PAGE_SIZE = 20
+const page = ref(1)
+
+const pagedRequirements = computed(() => {
+  const start = (page.value - 1) * PAGE_SIZE
+  return filteredRequirements.value.slice(start, start + PAGE_SIZE)
+})
+
+// 过滤条件变化 → 回到第 1 页（避免停留在超出范围的页）
+watch(() => [filters.value.category, filters.value.priority, filters.value.keyword, filters.value.matchStatus], () => {
+  page.value = 1
+})
 
 // M7：轮询 AbortController——组件卸载时中止比对轮询
 let matchPollCtrl = null
@@ -246,6 +267,12 @@ const filteredRequirements = computed(() => {
 
 const doneCount = computed(() => props.requirements.filter(r => r.status === '已完成' || r.status === 'done').length)
 const pendingCount = computed(() => props.requirements.filter(r => r.status === '待处理' || r.status === '待评审' || r.status === 'pending' || r.status === 'review').length)
+
+// 分页越界兜底：过滤结果变少（或数据刷新）时若当前页超出范围则回退到最后一页
+watch(filteredRequirements, () => {
+  const maxPage = Math.max(1, Math.ceil(filteredRequirements.value.length / PAGE_SIZE))
+  if (page.value > maxPage) page.value = maxPage
+})
 
 function getMatchInfo(row) {
   if (!matchData.value?.matches) return null
@@ -319,15 +346,14 @@ async function loadMatchAnalysis({ notifyOnError = false } = {}) {
       matchPollCtrl = new AbortController()
       const finalData = await pollMatchAnalysisTask(props.projectId, data.task_id, { signal: matchPollCtrl.signal })
       matchData.value = finalData
+      // 真正跑了新分析 → 才提示"分析完成"
       if (finalData?.summary) {
         ElMessage.success(`分析完成: 匹配率 ${finalData.summary.match_rate}%`)
       }
     } else {
-      // 有历史 或 0 需求短路 → 立即可显示
+      // 有历史 或 0 需求短路 → 复用结果立即可显示，**不弹"分析完成"**
+      // （后端 force=false 直接返回上次 MatchAnalysisRun，并非本次新分析；弹 toast 会误导用户以为刚重算过）
       matchData.value = data
-      if (data?.summary) {
-        ElMessage.success(`分析完成: 匹配率 ${data.summary.match_rate}%`)
-      }
     }
   } catch (e) {
     console.warn('[RequirementTable] 加载比对分析失败：', e)

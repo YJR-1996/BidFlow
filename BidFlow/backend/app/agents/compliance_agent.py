@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 def build_snapshots_from_requirements(db, requirements: List[Dict]) -> List[RequirementSnapshot]:
     """从 project 的 requirements 及其当前响应状态构建合规检查快照。"""
+    from app.services.text_utils import parse_source_refs
+
     req_ids = [r["id"] for r in requirements]
 
     latest_resp_map: Dict[int, Dict] = {}
@@ -34,10 +36,15 @@ def build_snapshots_from_requirements(db, requirements: List[Dict]) -> List[Requ
         resp_content_map = {
             r.requirement_id: (r.edited_content or r.ai_content or "") for r in resp_rows
         }
+        resp_source_map = {
+            r.requirement_id: parse_source_refs(getattr(r, "source_refs", None))
+            for r in resp_rows
+        }
         latest_resp_map = {
             rid: {
                 "status": resp_status_map.get(rid) or "",
                 "content": resp_content_map.get(rid, ""),
+                "source_refs": resp_source_map.get(rid, []),
             }
             for rid in req_ids
         }
@@ -45,14 +52,22 @@ def build_snapshots_from_requirements(db, requirements: List[Dict]) -> List[Requ
     snapshots: List[RequirementSnapshot] = []
     for req in requirements:
         resp = latest_resp_map.get(req["id"], {})
+        resp_content = resp.get("content", "")
+        source_refs = resp.get("source_refs", [])
+        status = resp.get("status") or req.get("status") or "未处理"
+        # 与主通道 compliance.py 同款双重保险：needs_manual / 待人工补充 状态下
+        # source_refs 必有历史残留，强制清空，避免规则误判「有资料」导致 P0 报成
+        # 「响应缺失」而非「资料缺失」
+        if status == "needs_manual" or resp_content.startswith("待人工补充"):
+            source_refs = []
         snapshots.append(
             RequirementSnapshot(
                 requirement_id=req["id"],
                 content=req.get("content", ""),
                 priority=req.get("priority", "P2"),
-                response_content=resp.get("content", ""),
-                source_refs=[],
-                status=resp.get("status") or req.get("status") or "未处理",
+                response_content=resp_content,
+                source_refs=source_refs,
+                status=status,
             )
         )
     return snapshots

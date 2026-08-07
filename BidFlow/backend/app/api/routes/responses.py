@@ -1,6 +1,7 @@
 """响应草稿路由 - AI 生成、获取、更新"""
 
 import json
+import logging
 import threading
 import uuid
 from datetime import datetime
@@ -21,6 +22,7 @@ from app.api.deps import get_current_user, get_project_or_404
 from app.core.exceptions import NotFoundException, BusinessException
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------------
 # 比对分析异步任务（解决 30s 超时：同步串行 19 条 LLM 比对需 100s+）
@@ -145,7 +147,15 @@ def analyze_requirement_matches(
             MatchAnalysisRun.project_id == project_id
         ).order_by(MatchAnalysisRun.created_at.desc()).first()
         if latest:
-            return ApiResponse(data=_serialize_run(latest))
+            serialized = _serialize_run(latest)
+            logger.info(
+                "[match-analysis] GET 复用历史 run=%s project=%s details=%d matched=%d",
+                latest.id, project_id,
+                len(serialized.get("matches") or []),
+                (serialized.get("summary") or {}).get("matched", 0),
+            )
+            return ApiResponse(data=serialized)
+        logger.info("[match-analysis] GET project=%s 无历史 run", project_id)
 
     # 短路：项目无需求时直接返回空 summary，不启动异步任务
     # （0 需求不需要 LLM 比对，启动任务只会让前端轮询空转）
@@ -153,6 +163,7 @@ def analyze_requirement_matches(
         Requirement.project_id == project_id
     ).count()
     if req_count == 0:
+        logger.info("[match-analysis] GET project=%s 需求为 0，直接返空", project_id)
         return ApiResponse(data={
             "summary": {"total": 0, "matched": 0, "unmatched": 0, "match_rate": 0.0},
             "matches": [],
@@ -160,6 +171,7 @@ def analyze_requirement_matches(
 
     # 无历史结果：启动异步后台任务，立即返回 task_id（同步串行需 100s+ 会触发前端 30s 超时）
     task_id = _start_match_task(project_id, current_user.id)
+    logger.info("[match-analysis] GET project=%s 无历史且需求=%d，启动异步 task=%s", project_id, req_count, task_id)
     return ApiResponse(data={
         "task_id": task_id,
         "status": "running",
@@ -290,7 +302,9 @@ def _compute_match_results(project_id: int, db: Session) -> dict:
 
             matches.append({
                 "requirement_id": req.id,
-                "content": req.content[:100] if req.content else "",
+                # 比对分析卡片预览截断到 100 字（避免长 content 撑高列表布局），
+                # 详情弹窗前端按 id 从 projectStore 取完整 content 显示。
+                "content": (req.content[:100] if req.content else ""),
                 "category": req.category,
                 "priority": req.priority,
                 "status": req.status,
@@ -326,7 +340,8 @@ def _compute_match_results(project_id: int, db: Session) -> dict:
 
             matches.append({
                 "requirement_id": req.id,
-                "content": req.content[:100] if req.content else "",
+                # 比对分析卡片预览截断（详情弹窗按 id 从 projectStore 取完整 content）
+                "content": (req.content[:100] if req.content else ""),
                 "category": req.category,
                 "priority": req.priority,
                 "status": req.status,
@@ -777,13 +792,21 @@ def update_response_draft(
         resp.edited_content = request.edited_content.strip()
     if request.status is not None:
         resp.status = request.status
-        # 主从联动：审核通过 → 需求"已完成"；驳回 → 回"待评审"（供强制重新生成闭环）
-        # 修复：此前只更新 BidResponse.status，Requirement.status 一直停留在"待评审"，
-        # 导致统计页"已通过 0/N"与列表"已生成"严重不一致
-        if request.status == "approved":
-            req.status = "已完成"
-        elif request.status == "rejected":
-            req.status = "待评审"
+        # 主从联动：响应状态 → 需求状态（统计页按 Requirement.status == "已完成" 判定"已通过"，
+        # 因此**所有**响应状态都必须映射到位——此前只映射 approved/rejected，
+        # 老板把状态改成"待审核"(review) 时 Requirement.status 停留旧值 → 统计纹丝不动）
+        REQ_STATUS_BY_RESP = {
+            "approved": "已完成",
+            "completed": "已完成",
+            "rejected": "待评审",        # 保持原行为（驳回后强制重新生成闭环）
+            "review": "待审核",          # 新增：待审核（老板反馈的缺口）
+            "pending_review": "待评审",
+            "editing": "待编辑",
+            "needs_manual": "待人工",
+        }
+        mapped = REQ_STATUS_BY_RESP.get(request.status)
+        if mapped:
+            req.status = mapped
         # 方案 A：项目状态自动流转（需求全完成 → 审核中；有未完成 → 回退准备中）
         from app.services.project_status import sync_project_status
         sync_project_status(db, req.project_id)

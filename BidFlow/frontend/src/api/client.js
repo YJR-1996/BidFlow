@@ -1,5 +1,6 @@
 // BidFlow API client - Axios wrapper with token injection and error handling
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 const api = axios.create({
   baseURL: '/api',
@@ -44,15 +45,11 @@ api.interceptors.response.use(
       } else if (data?.message) {
         message = data.message
       }
-      if (typeof window !== 'undefined' && window.ElementPlus) {
-        window.ElementPlus.ElMessage.error(message)
-      }
+      ElMessage.error(message)
       return Promise.reject(new Error(message))
     }
     // Network error
-    if (typeof window !== 'undefined' && window.ElementPlus) {
-      window.ElementPlus.ElMessage.error('网络连接失败，请检查网络')
-    }
+    ElMessage.error('网络连接失败，请检查网络')
     return Promise.reject(error)
   }
 )

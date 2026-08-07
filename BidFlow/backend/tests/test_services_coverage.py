@@ -6,6 +6,7 @@
 - readiness_service: 就绪度三维计算、提交门槛
 - file_storage: 保存/删除/非法路径/扩展名校验
 """
+import builtins
 import json
 import os
 import tempfile
@@ -87,7 +88,16 @@ class TestDocumentParser:
         f = tmp_path / "fake.pdf"
         f.write_bytes(b"%PDF-1.4 fake content")
 
-        with patch("builtins.__import__", side_effect=lambda name, *a, **k: (_ for _ in ()).throw(ImportError()) if name == "PyPDF2" else __builtins__.__import__(name, *a, **k)):
+        # 打补丁前先捕获真正的 __import__；注意模块内 __builtins__ 是 dict，
+        # 不能写 __builtins__.__import__（会 AttributeError）
+        orig_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "PyPDF2":
+                raise ImportError("No module named 'PyPDF2'")
+            return orig_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=fake_import):
             result = document_parser_service._parse_pdf(str(f))
         assert len(result) == 1
         assert "PDF" in result[0]["text"]
@@ -97,7 +107,14 @@ class TestDocumentParser:
         f = tmp_path / "fake.docx"
         f.write_bytes(b"fake docx")
 
-        with patch("builtins.__import__", side_effect=lambda name, *a, **k: (_ for _ in ()).throw(ImportError()) if name == "docx" else __builtins__.__import__(name, *a, **k)):
+        orig_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "docx":
+                raise ImportError("No module named 'docx'")
+            return orig_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=fake_import):
             result = document_parser_service._parse_docx(str(f))
         assert len(result) == 1
         assert "DOCX" in result[0]["text"]

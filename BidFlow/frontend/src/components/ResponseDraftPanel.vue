@@ -92,15 +92,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { updateDraft } from '@/api/compliance'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   requirement: { type: Object, default: null }
 })
 
-const emit = defineEmits(['update:modelValue', 'save', 'regenerate', 'status-change'])
+const emit = defineEmits(['update:modelValue', 'saved', 'regenerate', 'status-change'])
 
 const visible = computed({
   get: () => props.modelValue,
@@ -113,6 +114,56 @@ const draftStatus = ref('idle')
 const saving = ref(false)
 const status = ref('editing')
 const sources = ref([])
+
+// ---- 本地自动保存（autosave）：防 token 过期/页面刷新/崩溃导致未保存编辑丢失 ----
+const AUTOSAVE_KEY = (rid) => `bidflow_draft_${rid}`
+const AUTOSAVE_DELAY = 800
+let autosaveTimer = null
+let restoringDraft = false
+
+function flushAutosave() {
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer)
+    autosaveTimer = null
+  }
+  const rid = currentReq.value?.id
+  if (rid && draftContent.value.trim()) {
+    try { localStorage.setItem(AUTOSAVE_KEY(rid), draftContent.value) } catch { /* 存储不可用忽略 */ }
+  }
+}
+
+function scheduleAutosave() {
+  if (restoringDraft) return
+  const rid = currentReq.value?.id
+  if (!rid) return
+  clearTimeout(autosaveTimer)
+  autosaveTimer = setTimeout(() => {
+    autosaveTimer = null
+    try { localStorage.setItem(AUTOSAVE_KEY(rid), draftContent.value) } catch { /* 忽略 */ }
+  }, AUTOSAVE_DELAY)
+}
+
+function clearAutosave(rid) {
+  if (autosaveTimer) {
+    clearTimeout(autosaveTimer)
+    autosaveTimer = null
+  }
+  try { localStorage.removeItem(AUTOSAVE_KEY(rid)) } catch { /* 忽略 */ }
+}
+
+function restoreAutosave(rid) {
+  try {
+    const saved = localStorage.getItem(AUTOSAVE_KEY(rid))
+    if (saved != null && saved.trim()) {
+      restoringDraft = true
+      draftContent.value = saved
+      restoringDraft = false
+      ElMessage.info('已恢复上次未保存的编辑内容')
+      return true
+    }
+  } catch { /* 忽略 */ }
+  return false
+}
 
 // 抽屉响应式宽度：小屏全屏，桌面端占 55-62%，大屏 52%
 const drawerSize = computed(() => {
@@ -155,7 +206,11 @@ const contentLoading = ref(false)  // 内容加载中（父组件 _loading 标�
 // 只监听 requirement.id（方案 A）：切换需求才重置内容，避免父组件 await 返回时
 // 重新赋值对象触发 deep watch 造成的"清空 → 加载 → 填充"空闪
 // + loading 保护（方案 C）：_loading=true 时显示加载中，不清空 draftContent
-watch(() => props.requirement?.id, (id) => {
+watch(() => props.requirement?.id, (id, oldId) => {
+  // 切换前：把上个需求的未保存编辑 flush 到本地（watch 回调时 props 已切到新需求，需用 oldId）
+  if (oldId && draftContent.value.trim()) {
+    try { localStorage.setItem(AUTOSAVE_KEY(oldId), draftContent.value) } catch { /* 忽略 */ }
+  }
   if (!id) return
   const req = props.requirement
   if (req?._loading) {
@@ -163,6 +218,15 @@ watch(() => props.requirement?.id, (id) => {
     return
   }
   contentLoading.value = false
+  // 本地有未保存草稿 → 优先恢复（比后端 _draftContent 更新），否则用后端内容
+  if (restoreAutosave(id)) {
+    sources.value = req?._sources || []
+    status.value = mapStatusFromBackend(req?._status || req?.status || '')
+    draftStatus.value = 'idle'
+    saving.value = false
+    selectKey.value++
+    return
+  }
   draftContent.value = req?._draftContent || ''
   sources.value = req?._sources || []
   status.value = mapStatusFromBackend(req?._status || req?.status || '')
@@ -170,6 +234,12 @@ watch(() => props.requirement?.id, (id) => {
   saving.value = false
   selectKey.value++  // 强制 el-select 重新渲染，让 status 匹配项正确显示
 }, { immediate: true })
+
+// 用户编辑输入 → 防抖自动保存
+watch(draftContent, () => {
+  if (restoringDraft) return
+  scheduleAutosave()
+})
 
 // 兜底：_loading 生命周期（父组件 _loading=true → 显示加载中骨架；finally false → 刷新内容）
 // 覆盖「重新生成」场景：id 不变，只能靠此 watch 感知生成开始（true）与结束（false）
@@ -197,15 +267,22 @@ watch(() => props.requirement?._draftContent, (content) => {
   if (!contentLoading.value && props.requirement?.id) {
     draftContent.value = content || ''
     saving.value = false
+    // 后端内容已更新（重新生成/保存回写）→ 清本地草稿，避免下次恢复旧稿
+    clearAutosave(props.requirement.id)
   }
 })
 
 watch(visible, (val) => {
   if (!val) {
+    flushAutosave()   // 关闭抽屉：把最后未落盘的编辑保存到本地
     draftStatus.value = 'idle'
     saving.value = false
   }
 })
+
+// 页面刷新/关闭前：把未保存编辑 flush 到本地（防抖窗口内的最后输入）
+onMounted(() => window.addEventListener('beforeunload', flushAutosave))
+onUnmounted(() => window.removeEventListener('beforeunload', flushAutosave))
 
 function getCategoryLabel(cat) {
   const map = { technical: '技术', business: '商务', qualification: '资质', scoring: '评分', 技术: '技术', 商务: '商务', 资格: '资质', 评分: '评分' }
@@ -249,14 +326,25 @@ async function saveDraft() {
     ElMessage.warning('请输入响应内容')
     return
   }
+  const reqId = currentReq.value?.id
+  if (!reqId) {
+    ElMessage.error('当前需求不存在，无法保存')
+    return
+  }
+  // L12：面板自管 saving——直接调 API，try/finally 兜底复位，
+  // 不再依赖父组件异步回写 _draftContent（原 emit('save') 是同步的，
+  // 父组件失败/提前 return 时 saving 永远停在 true → 按钮无限转圈）
   saving.value = true
-  // L10：保存成功由父组件写回 _draftContent 触发 watch 复位 saving（去掉 1.2s 硬编码）；
-  // 父组件失败时由下面 catch 复位
   try {
-    emit('save', draftContent.value)
+    await updateDraft(reqId, { edited_content: draftContent.value })
+    clearAutosave(reqId)   // 已保存到后端 → 清本地草稿
+    ElMessage.success('草案已保存')
+    emit('saved') // 通知父组件刷新需求列表等副作用
   } catch (e) {
-    saving.value = false
-    ElMessage.error(e.message || '保存失败')
+    ElMessage.error(e?.message || '保存失败，请稍后重试')
+    // 保存失败：本地草稿保留（autosave 仍持有），下次打开可恢复，不丢失
+  } finally {
+    saving.value = false // 无论成败，按钮状态归位
   }
 }
 

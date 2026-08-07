@@ -41,21 +41,25 @@
         </div>
         <div class="header-actions">
           <el-button size="small" @click="exportDraft" class="export-btn">导出草稿</el-button>
-          <!-- 标书导出：合并全部需求响应生成投标文件（Markdown/PDF） -->
-          <el-dropdown trigger="click" @command="exportBidDocument">
-            <el-button size="small" type="primary" plain class="export-btn">导出标书</el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="markdown">Markdown 文档</el-dropdown-item>
-                <el-dropdown-item command="pdf">PDF 文档</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <!-- 方案 A：一键打包投递包（标书 md/pdf + 合规报告 md/pdf + README） -->
-          <el-button size="small" type="primary" class="submit-btn" @click="exportBidPackage" :loading="packaging">
-            <template #icon><span class="material-symbols-outlined">archive</span></template>
-            打包投递包
-          </el-button>
+          <!-- 标书导出：合并全部需求响应生成投标文件（Markdown/PDF）——就绪度 ≥95% 且无未处理高风险才放行 -->
+          <el-tooltip :content="exportBlockReason || '导出投标响应文件'" placement="top" :disabled="canExportBid">
+            <el-dropdown trigger="click" @command="exportBidDocument" :disabled="!canExportBid">
+              <el-button size="small" type="primary" plain class="export-btn" :disabled="!canExportBid">导出标书</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="markdown">Markdown 文档</el-dropdown-item>
+                  <el-dropdown-item command="pdf">PDF 文档</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </el-tooltip>
+          <!-- 方案 A：一键打包投递包（标书 md/pdf + 合规报告 md/pdf + README）——同样受就绪度门槛约束 -->
+          <el-tooltip :content="exportBlockReason || '打包全部投递文件'" placement="top" :disabled="canExportBid">
+            <el-button size="small" type="primary" class="submit-btn" @click="exportBidPackage" :loading="packaging" :disabled="!canExportBid">
+              <template #icon><span class="material-symbols-outlined">archive</span></template>
+              打包投递包
+            </el-button>
+          </el-tooltip>
         </div>
       </div>
     </div>
@@ -96,8 +100,8 @@
             <div class="file-list">
               <div v-for="file in tenderDocs" :key="file.id" class="file-item">
                 <div class="file-done">
-                  <span class="material-symbols-outlined" :class="file.status === 'success' ? 'text-success-green' : 'text-primary'">
-                    {{ file.status === 'success' ? 'check_circle' : 'article' }}
+                  <span class="material-symbols-outlined" :class="isTenderDocSuccess(file.status) ? 'text-success-green' : 'text-primary'">
+                    {{ isTenderDocSuccess(file.status) ? 'check_circle' : 'article' }}
                   </span>
                   <span class="file-name">{{ file.filename }}</span>
                   <el-dropdown>
@@ -134,7 +138,7 @@
                 <div class="info-grid">
                   <div class="info-item">
                     <span class="info-label">招标文件编号</span>
-                    <span class="info-value">{{ projectStore.currentProject?.id || '--' }}</span>
+                    <span class="info-value">{{ projectStore.currentProject?.tender_ref_no || projectStore.currentProject?.tender_no || projectStore.currentProject?.id || '--' }}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">项目总预算</span>
@@ -281,7 +285,7 @@
             <!-- 比对结果列表 -->
             <div class="comparison-list" v-if="comparisonData">
               <div
-                v-for="match in filteredComparisonMatches"
+                v-for="match in pagedComparisonMatches"
                 :key="match.requirement_id"
                 class="comparison-item"
                 :class="{ matched: match.has_match, unmatched: !match.has_match }"
@@ -362,6 +366,17 @@
               </div>
             </div>
 
+            <!-- 比对列表分页（summary 匹配率始终为全量值，分页仅展示层切分） -->
+            <div class="comparison-pagination" v-if="comparisonData && filteredComparisonMatches.length > COMPARISON_PAGE_SIZE">
+              <el-pagination
+                v-model:current-page="comparisonPage"
+                background
+                layout="prev, pager, next"
+                :total="filteredComparisonMatches.length"
+                :page-size="COMPARISON_PAGE_SIZE"
+              />
+            </div>
+
             <!-- 批量操作 -->
             <div class="comparison-actions" v-if="comparisonData && comparisonData.summary.matched > 0">
               <el-button
@@ -393,7 +408,7 @@
     <ResponseDraftPanel
       v-model="draftPanelVisible"
       :requirement="currentDraftReq"
-      @save="handleSaveDraft"
+      @saved="handleDraftSaved"
       @regenerate="handleRegenerateDraft"
       @status-change="handleDraftStatusChange"
     />
@@ -493,6 +508,22 @@ const tenderDocs = computed(() => projectStore.tenderDocs)
 
 const readiness = computed(() => projectStore.currentProject?.readiness || null)
 
+// 标书导出门槛（与后端 can_submit 同口径）：无未处理高风险 且 综合就绪度 >= 95
+// readiness 缺失（旧数据）时放行点击，由后端校验兜底
+const canExportBid = computed(() => {
+  const r = readiness.value
+  if (!r) return true
+  return !!r.can_submit
+})
+const exportBlockReason = computed(() => {
+  const r = readiness.value
+  if (!r || r.can_submit) return ''
+  const parts = []
+  if (r.high_risk_pending > 0) parts.push(`仍有 ${r.high_risk_pending} 个高风险项未处理`)
+  if (r.overall < 95) parts.push(`响应就绪度 ${r.overall}%（需达到 95%）`)
+  return parts.length ? `暂不可导出：${parts.join('，')}` : ''
+})
+
 const requirements = computed(() => {
   const reqs = projectStore.requirements
   return reqs.map(r => ({
@@ -523,8 +554,21 @@ const projectId = computed(() => route.params.id)
 // 比对分析相关状态
 const comparing = ref(false)
 const batchGenerating = ref(false)
+// M9：比对结果派生自 projectStore（持久化），不再用 view-local ref，避免 tab 切换/重挂载导致历史结果丢失
 const comparisonData = ref(null)
+
+// 与 store 同步：autoLoadComparison 通过 setMatchAnalysis 写 store，
+// 此 watch 触发 → comparisonData 更新（覆盖切到比对 tab 后的自动加载路径）。
+// 同时支持 runComparisonSilent 直接赋值（改状态后静默刷新比对）。
+watch(
+  () => projectStore.currentProject?.matchAnalysis,
+  (val) => { comparisonData.value = val },
+  { immediate: true },
+)
 const comparisonFilter = ref('all')
+// ---- 比对列表分页（前端 slice：匹配率 summary 始终全量，分页只切展示层）----
+const COMPARISON_PAGE_SIZE = 20
+const comparisonPage = ref(1)
 
 const filteredComparisonMatches = computed(() => {
   if (!comparisonData.value?.matches) return []
@@ -534,6 +578,22 @@ const filteredComparisonMatches = computed(() => {
     case 'unmatched': return matches.filter(m => !m.has_match)
     default: return matches
   }
+})
+
+const pagedComparisonMatches = computed(() => {
+  const start = (comparisonPage.value - 1) * COMPARISON_PAGE_SIZE
+  return filteredComparisonMatches.value.slice(start, start + COMPARISON_PAGE_SIZE)
+})
+
+// 过滤切换 / 数据刷新 → 回第 1 页
+function filterComparison(type) {
+  comparisonFilter.value = type
+  comparisonPage.value = 1
+}
+
+// 重新跑比对（comparisonData 整体替换）→ 回到第 1 页
+watch(comparisonData, () => {
+  comparisonPage.value = 1
 })
 
 function categoryCount(cat) {
@@ -567,10 +627,6 @@ function getResponseStatusLabel(status) {
   return map[status] || '待处理'
 }
 
-function filterComparison(type) {
-  comparisonFilter.value = type
-}
-
 // 轮询比对分析后台任务：启动返回 task_id → 每 2s 查 status → completed 后填充数据
 // 委托给 compliance.js 共享轮询（与 RequirementTable 共用）；M7：传 signal 支持卸载中止
 async function pollMatchAnalysis(taskId) {
@@ -595,7 +651,9 @@ async function runComparison() {
     }
     ElMessage.info('比对分析已启动，正在后台处理...')
     const finalData = await pollMatchAnalysis(startData.task_id)
-    comparisonData.value = finalData
+    if (finalData) {
+      projectStore.setMatchAnalysis(projectId.value, finalData)
+    }
     if (finalData?.summary) {
       ElMessage.success(`比对完成: 匹配率 ${finalData.summary.match_rate}%`)
     }
@@ -758,7 +816,8 @@ onUnmounted(() => {
 
 watch(activeTab, async (tab) => {
   if (!projectId.value) return
-  if (tab === 'comparison' && !comparisonData.value) {
+  if (tab === 'comparison') {
+    // M9：每次切到比对分析 tab 主动拉一次（即使 store 有缓存），避免历史结果被永久锁在内存里看不到
     await autoLoadComparison()
   }
   if (tab === 'compliance') {
@@ -778,12 +837,20 @@ async function autoLoadComparison() {
     // 后端无历史时返回 {task_id, status:"running"} 启动异步比对 → 轮询等待
     if (data?.task_id && data?.status === 'running') {
       const finalData = await pollMatchAnalysis(data.task_id)
-      comparisonData.value = finalData
+      if (finalData) {
+        projectStore.setMatchAnalysis(projectId.value, finalData)
+      }
+    } else if (data && (data.summary || data.matches)) {
+      // 有历史结果：写入 store（view 派生自 store，模板自动刷新）
+      projectStore.setMatchAnalysis(projectId.value, data)
     } else {
-      comparisonData.value = data
+      // 空响应（不应发生）：保留 null，让 UI 走"尚未进行"分支
+      console.warn('[autoLoadComparison] 后端返回无 summary/matches 也无 task_id', data)
     }
   } catch (e) {
+    // M9：失败必须可见（之前 console.error 静默吞，导致用户看到"查不到"却无任何反馈）
     console.error('自动加载比对分析失败:', e)
+    ElMessage.error(`比对分析加载失败：${e?.message || '未知错误'}`)
   } finally {
     comparing.value = false
   }
@@ -884,6 +951,11 @@ async function handleFileChange(uploadFile) {
   }
 }
 
+// 招标文件解析成功态判定：兼容历史 parsed（旧 ParseAgent 状态词）与新 success（与路由/前端契约统一）
+function isTenderDocSuccess(status) {
+  return status === 'success' || status === 'parsed'
+}
+
 async function handleDeleteDoc(docId) {
   try {
     await projectStore.removeTenderDoc(docId)
@@ -943,7 +1015,11 @@ async function handleEditRequirement(req) {
 function handleViewRequirement(req) {
   if (!req) return
   const id = typeof req === 'number' ? req : req.id
-  const content = req.content || req.title || '未命名需求'
+  // 内容来源：比对分析卡片传的是 match.content（已被后端 [:100] 截断用于卡片预览），
+  // 详情弹窗需显示完整 → 按 id 从 projectStore 取已加载的完整 requirement.content
+  // （loadRequirements 时已全量加载，store 里有完整数据）。
+  const fullReq = projectStore.requirements?.find(r => r.id === id)
+  const content = fullReq?.content || req.content || req.title || '未命名需求'
 
   // 匹配来源查找（按优先级）：
   // 1) req 自带（如比对分析 tab 传入的 match 对象）
@@ -1039,16 +1115,13 @@ async function handleGenerateDraft(reqId) {
   }
 }
 
-async function handleSaveDraft(content) {
-  if (!currentDraftReq.value) return
+// L12：面板自管保存请求与 loading（saving 由面板 try/finally 复位），
+// 这里只做保存成功后的副作用：刷新需求列表（status/内容最新态）
+async function handleDraftSaved() {
   try {
-    await updateDraftApi(currentDraftReq.value.id, { edited_content: content })
-    // L10：写回 _draftContent 触发面板 watch 复位 saving（替代面板内 1.2s 硬编码复位）
-    currentDraftReq.value._draftContent = content
-    ElMessage.success('草案已保存')
     await loadRequirements()
   } catch {
-    ElMessage.error('保存失败')
+    // 刷新失败不打断用户（数据下次进入/操作时自动补齐）
   }
 }
 
@@ -1140,8 +1213,9 @@ async function handleRecheck() {
   }
 }
 
-async function handleApplyFix(item) {
-  if (!item) return
+// 项目级补救（原每条风险卡片的"应用建议"已提升为 RiskSummary 头部"生成补救计划"按钮，
+// 不再接收单条 item——作用于本项目全部未处理风险）
+async function handleApplyFix() {
   const id = route.params.id
   if (!id) return
   // 真实落地：调 /remediate 生成补救计划（按 rule_code 映射为可执行动作），
@@ -1166,6 +1240,13 @@ async function handleApplyFix(item) {
       remediatePollCtrl?.abort()
       remediatePollCtrl = new AbortController()
       await pollRemediateBatch(id, data.regenerate_task_id, { signal: remediatePollCtrl.signal })
+      // P0-1：响应重新生成后自动重跑合规核查，重建风险清单。
+      // 若不重跑，compliance_issues 旧记录残留，风险项不会消失（用户会误以为"应用建议"没生效）
+      try {
+        await runComplianceCheckApi(id)
+      } catch (e) {
+        console.warn('补救后自动重跑合规核查失败（响应已更新，可手动点击重新核查）:', e)
+      }
       await Promise.all([loadRequirements(), autoLoadComplianceReport()])
       ElMessage.success(`重新生成完成：${regenCount} 项已更新，风险报告已刷新`)
     } else {
@@ -1256,6 +1337,10 @@ async function exportDraft() {
 async function exportBidDocument(format = 'markdown') {
   const id = route.params.id
   if (!id) return
+  if (exportBlockReason.value) {
+    ElMessage.warning(exportBlockReason.value)
+    return
+  }
   try {
     const blob = await downloadBidDocument(id, format)
     const ext = format === 'pdf' ? 'pdf' : 'md'
@@ -1268,8 +1353,8 @@ async function exportBidDocument(format = 'markdown') {
     a.remove()
     window.URL.revokeObjectURL(url)
     ElMessage.success('标书已导出')
-  } catch {
-    ElMessage.error('标书导出失败')
+  } catch (e) {
+    ElMessage.error(e?.message || '标书导出失败')
   }
 }
 
@@ -1277,6 +1362,10 @@ async function exportBidDocument(format = 'markdown') {
 async function exportBidPackage() {
   const id = route.params.id
   if (!id) return
+  if (exportBlockReason.value) {
+    ElMessage.warning(exportBlockReason.value)
+    return
+  }
   packaging.value = true
   try {
     const blob = await downloadBidPackage(id)
@@ -1289,8 +1378,8 @@ async function exportBidPackage() {
     a.remove()
     window.URL.revokeObjectURL(url)
     ElMessage.success('投递包已生成')
-  } catch {
-    ElMessage.error('打包失败')
+  } catch (e) {
+    ElMessage.error(e?.message || '打包失败')
   } finally {
     packaging.value = false
   }
@@ -2106,6 +2195,12 @@ async function exportBidPackage() {
 
 .content-text {
   color: var(--on-surface);
+  /* 比对分析卡片预览截断：避免长需求 content 撑高卡片布局，完整内容在「查看详情」弹窗 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .source-list {
@@ -2207,6 +2302,13 @@ async function exportBidPackage() {
   background: var(--surface-container-low);
   border-radius: 12px;
   border: 1px solid var(--border-subtle);
+}
+
+/* 比对列表分页：居中，与列表间距 */
+.comparison-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
 }
 
 @media (max-width: 1024px) {

@@ -188,8 +188,14 @@ class ChatService:
         try:
             from app.services.readiness_service import readiness_service
             rd = readiness_service.calculate(project_id, db)
-            readiness = {"overall": rd.overall, "basis": rd.basis, "quality": rd.quality, "compliance": rd.compliance}
-        except Exception:
+            readiness = {
+                "overall": rd.overall,
+                "basis": rd.base_rate,
+                "quality": rd.quality_rate,
+                "compliance": rd.compliance_rate,
+            }
+        except Exception as e:  # noqa: BLE001 - 就绪度为增强信息，失败不应阻断概览
+            logger.warning("readiness calc failed for project %s: %s", project_id, e)
             readiness = {}
         return {
             "project_id": project_id,
@@ -299,68 +305,9 @@ class ChatService:
         }
 
     def _tool_recheck(self, project_id: int, owner_id: str, db) -> Dict[str, Any]:
-        """轻量规则核查（规则引擎，不含语义 LLM，秒级）。与完整 run_compliance_check 行为对齐口径。"""
-        from app.models.requirement import Requirement
-        from app.services.compliance_checker import ComplianceChecker, RequirementSnapshot
-        from app.models.compliance_issue import ComplianceIssue
-        from app.services.text_utils import parse_source_refs  # L1：公共解析
-
-        reqs = db.query(Requirement).filter(Requirement.project_id == project_id).all()
-        if not reqs:
-            return {"error": "该项目暂无需求项，请先解析招标文件"}
-
-        snapshots = []
-        for req in reqs:
-            resp_content, source_refs, resp_status = "", [], None
-            for r in (req.responses or []):
-                if not resp_content:
-                    resp_content = r.edited_content or r.ai_content or ""
-                if not source_refs and getattr(r, "source_refs", None):
-                    source_refs = parse_source_refs(r.source_refs)
-                if resp_status is None and (r.edited_content or r.ai_content):
-                    resp_status = r.status
-            snapshot_status = resp_status or req.status or "未处理"
-            if snapshot_status == "needs_manual" or resp_content.startswith("待人工补充"):
-                source_refs = []
-            snapshots.append(RequirementSnapshot(
-                requirement_id=req.id, content=req.content or "",
-                priority=req.priority or "P2", response_content=resp_content,
-                source_refs=source_refs, status=snapshot_status,
-            ))
-
-        issues = ComplianceChecker().check(snapshots)
-
-        # 只重建「规则引擎 + 未处理」部分；保留语义合规(semantic)与用户已处理(已处理)记录，
-        # 避免轻量核查把完整核查的成果抹掉（H2）
-        keep = db.query(ComplianceIssue).filter(
-            ComplianceIssue.project_id == project_id,
-            (ComplianceIssue.source == "semantic") | (ComplianceIssue.status == "已处理"),
-        ).all()
-        keep_ids = {i.id for i in keep}
-        db.query(ComplianceIssue).filter(
-            ComplianceIssue.project_id == project_id,
-            ComplianceIssue.id.notin_(keep_ids) if keep_ids else ComplianceIssue.id.isnot(None),
-        ).delete(synchronize_session=False)
-        for it in issues:
-            db.add(ComplianceIssue(
-                project_id=project_id, requirement_id=it.requirement_id,
-                # H1：ComplianceChecker 返回英文 level，必须中文化入库（下游按"高/中/低"统计）
-                level={"high": "高", "medium": "中", "low": "低"}.get(it.level, it.level),
-                rule_code=it.rule_code, description=it.description,
-                suggestion=it.suggestion, status="未处理", source="rule",
-            ))
-        db.commit()
-        return {
-            "checked": len(snapshots),
-            "rule_issue_count": len(issues),
-            # issues 来自 ComplianceChecker（英文 level），统计按英文判断
-            "high": sum(1 for i in issues if i.level == "high"),
-            "medium": sum(1 for i in issues if i.level == "medium"),
-            "issues": [
-                {"requirement_id": i.requirement_id, "rule_code": i.rule_code, "description": i.description}
-                for i in issues[:10]
-            ],
-        }
+        """轻量规则核查（规则引擎，不含语义 LLM，秒级）。复用公共函数 compliance_recheck.recheck_rule_issues。"""
+        from app.services.compliance_recheck import recheck_rule_issues
+        return recheck_rule_issues(project_id, db)
 
     def _tool_remediate(self, project_id: int, owner_id: str, db) -> Dict[str, Any]:
         """生成补救计划（与 POST /remediate 同逻辑的精简版，不触发后台批量任务，仅返回动作说明）。"""

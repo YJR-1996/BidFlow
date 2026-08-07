@@ -6,6 +6,7 @@
 mock 掉 vector_store 的语义比对与 LLM 调用，避免依赖外部服务。
 """
 import json
+import time
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -108,6 +109,30 @@ def _setup_project_with_requirements(client, headers):
     return project_id, reqs
 
 
+def _poll_match_status(client, headers, project_id, task_id, timeout=15.0):
+    """轮询比对分析后台任务，直到 completed/failed，返回最终 data。
+
+    match-analysis 已改为异步任务：端点立即返回 task_id，后台线程计算并持久化。
+    启动请求返回后其会话即关闭，后台线程独占测试库连接；轮询前先小睡，
+    待后台线程完成，避免与 StaticPool 单连接产生竞争。
+    """
+    time.sleep(0.5)  # 比对已 mock，后台通常很快；留出余量确保线程完成
+    deadline = time.time() + timeout
+    last = None
+    while time.time() < deadline:
+        r = client.get(
+            f"/api/requirements/projects/{project_id}/match-analysis/status",
+            params={"task_id": task_id},
+            headers=headers,
+        )
+        assert r.status_code == 200, r.text
+        last = r.json()["data"]
+        if last["status"] in ("completed", "failed"):
+            return last
+        time.sleep(0.1)
+    raise AssertionError(f"match task {task_id} 未在 {timeout}s 内结束，最后状态: {last}")
+
+
 # ---------------------------------------------------------------------------
 # 1. 比对分析（responses.py: match-analysis）
 # ---------------------------------------------------------------------------
@@ -130,8 +155,8 @@ class TestMatchAnalysis:
         data = result.json()["data"]
         assert data["summary"]["total"] == 0
 
-    def test_match_analysis_persists_and_reuses(self, client, auth_headers):
-        """force=false 时第二次应复用持久化结果（不重算）"""
+    def test_match_analysis_persists_and_reuses(self, client, auth_headers, test_db):
+        """force=false 时第二次应复用持久化结果（不重算）。异步任务版。"""
         project_id, reqs = _setup_project_with_requirements(client, auth_headers)
         assert len(reqs) > 0
 
@@ -142,18 +167,26 @@ class TestMatchAnalysis:
             gap="部分覆盖", pending_review=True,
         )
 
-        with patch("app.services.vector_store.vector_store_service.match_requirement_to_materials", return_value=mock_result) as mock_match:
-            # 第一次：实时计算并持久化
+        with patch("app.db.session._SyncSessionLocal", test_db), \
+             patch("app.services.vector_store.vector_store_service.match_requirement_to_materials",
+                   return_value=mock_result) as mock_match:
+            # 第一次：启动异步任务，计算并持久化
             r1 = client.get(f"/api/requirements/projects/{project_id}/match-analysis", headers=auth_headers)
             assert r1.status_code == 200
             d1 = r1.json()["data"]
-            assert d1["summary"]["total"] == len(reqs)
-            assert "run_id" in d1
+            assert d1["status"] == "running"
+            assert d1["task_id"]
+            final1 = _poll_match_status(client, auth_headers, project_id, d1["task_id"])
+            assert final1["status"] == "completed"
+            assert final1["summary"]["total"] == len(reqs)
+            assert "run_id" in final1
 
-            # 第二次 force=false：应复用，不重算
+            # 第二次 force=false：命中复用分支，同步返回，不应再触发比对
             call_count_before = mock_match.call_count
             r2 = client.get(f"/api/requirements/projects/{project_id}/match-analysis", headers=auth_headers)
             assert r2.status_code == 200
+            d2 = r2.json()["data"]
+            assert d2["summary"]["total"] == len(reqs)
             # match_requirement_to_materials 调用次数不应增加
             assert mock_match.call_count == call_count_before
 
@@ -174,17 +207,23 @@ class TestMatchAnalysis:
             r = client.get(f"/api/requirements/projects/{project_id}/match-analysis?force=true", headers=auth_headers)
             assert r.status_code == 200
 
-    def test_run_match_analysis_endpoint(self, client, auth_headers):
-        """POST /match-analysis/run 强制重算端点"""
+    def test_run_match_analysis_endpoint(self, client, auth_headers, test_db):
+        """POST /match-analysis/run 强制重算端点（异步任务）。"""
         project_id, reqs = _setup_project_with_requirements(client, auth_headers)
         from app.services.vector_store import MatchResult
 
-        with patch("app.services.vector_store.vector_store_service.match_requirement_to_materials",
-                    return_value=MatchResult(requirement_id=0, coverage="missing", confidence=0,
-                    material_covered=False, evidence=[], gap="x", pending_review=False)):
+        with patch("app.db.session._SyncSessionLocal", test_db), \
+             patch("app.services.vector_store.vector_store_service.match_requirement_to_materials",
+                   return_value=MatchResult(requirement_id=0, coverage="missing", confidence=0,
+                                            material_covered=False, evidence=[], gap="x", pending_review=False)):
             r = client.post(f"/api/requirements/projects/{project_id}/match-analysis/run", headers=auth_headers)
             assert r.status_code == 200
-            assert r.json()["data"]["summary"]["total"] == len(reqs)
+            data = r.json()["data"]
+            assert data["status"] == "running"
+            assert data["task_id"]
+            final = _poll_match_status(client, auth_headers, project_id, data["task_id"])
+        assert final["status"] == "completed"
+        assert final["summary"]["total"] == len(reqs)
 
     def test_match_analysis_other_user_denied(self, client, auth_headers):
         """其他用户不能访问比对分析"""
@@ -305,7 +344,7 @@ class TestStats:
 # 4. 端到端工作流：完整链路
 # ---------------------------------------------------------------------------
 class TestEndToEndWorkflow:
-    def test_full_workflow(self, client, auth_headers):
+    def test_full_workflow(self, client, auth_headers, test_db):
         """完整工作流：创建→上传→解析→比对→合规→报告
 
         验证每个环节都能正常运行且数据贯穿。
@@ -354,17 +393,23 @@ class TestEndToEndWorkflow:
         assert batch.status_code == 200
         assert batch.json()["data"]["updated"] == len(requirement_list)
 
-        # 7. 比对分析（mock 向量检索）
+        # 7. 比对分析（mock 向量检索，异步任务）
         from app.services.vector_store import MatchResult
         mock_result = MatchResult(
             requirement_id=0, coverage="partial", confidence=0.8,
             material_covered=True, evidence=[{"source_ref": "case.pdf", "quote": "案例"}],
             gap="部分覆盖", pending_review=True,
         )
-        with patch("app.services.vector_store.vector_store_service.match_requirement_to_materials", return_value=mock_result):
+        with patch("app.db.session._SyncSessionLocal", test_db), \
+             patch("app.services.vector_store.vector_store_service.match_requirement_to_materials",
+                   return_value=mock_result):
             match = client.get(f"/api/requirements/projects/{project_id}/match-analysis", headers=auth_headers)
-        assert match.status_code == 200
-        assert match.json()["data"]["summary"]["total"] == len(requirement_list)
+            assert match.status_code == 200
+            mdata = match.json()["data"]
+            assert mdata["task_id"]
+            final = _poll_match_status(client, auth_headers, project_id, mdata["task_id"])
+        assert final["status"] == "completed"
+        assert final["summary"]["total"] == len(requirement_list)
 
         # 8. 合规核查
         compliance = client.post(f"/api/{project_id}/compliance-check", headers=auth_headers)

@@ -25,7 +25,7 @@
                 <span class="material-symbols-outlined">upload_file</span>
               </div>
               <h3>点击或拖拽文件到此处上传</h3>
-              <p>支持 PDF, DOCX, TXT 格式，单个文件不超过 50MB。AI 将自动解析文档内容。</p>
+              <p>支持 PDF, DOCX, TXT 格式，单个文件不超过 25MB。AI 将自动解析文档内容。</p>
               <input type="file" ref="fileInput" multiple accept=".pdf,.docx,.txt" @change="handleFileSelect" class="hidden" />
             </div>
 
@@ -721,6 +721,9 @@ function formatSize(bytes) {
 
 // 用户选完文件只入队，必须点「开始上传并向量化」按钮才真正执行上传。
 // 这样用户可以：① 选多文件后再统一配置；② 改主意时移除已选项；③ 避免自动触发。
+// 单个文件上限，与后端 config.MAX_UPLOAD_SIZE 对齐（25MB）
+const MAX_FILE_SIZE = 25 * 1024 * 1024
+
 function handleFileSelect(e) {
   const files = Array.from(e.target.files || [])
   // 清空 input.value，允许再次选同名文件
@@ -733,9 +736,17 @@ function handleFileSelect(e) {
     return
   }
 
+  // 大小校验：超过 25MB 直接剔除并提示（后端同样拦截，但前端反馈更快）
+  const overSize = files.filter(f => f.size > MAX_FILE_SIZE)
+  if (overSize.length) {
+    ElMessage.error(overSize.map(f => `「${f.name}」${formatSize(f.size)} 超过 25MB 上限，已跳过`).join('；'))
+  }
+  const filesInLimit = files.filter(f => f.size <= MAX_FILE_SIZE)
+  if (!filesInLimit.length) return
+
   // 简单去重：同 filename 已存在则跳过
   const existing = new Set(pendingFiles.value.map(f => f.name + f.size))
-  const fresh = files.filter(f => !existing.has(f.name + f.size))
+  const fresh = filesInLimit.filter(f => !existing.has(f.name + f.size))
   if (!fresh.length) {
     ElMessage.warning('所选文件已在待上传列表中')
     return

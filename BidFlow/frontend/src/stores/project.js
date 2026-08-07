@@ -67,8 +67,18 @@ export const useProjectStore = defineStore('project', () => {
       risk_count: item.risk_count,
       completionRate: item.completion_rate ?? 0,
       readiness: item.readiness || null,
+      // M9：比对分析结果随项目持久化，避免 view-local ref 在 tab 切换/重挂载后清空导致"查不到"
+      matchAnalysis: item.match_analysis || null,
       created_at: item.created_at,
       updated_at: item.updated_at,
+    }
+  }
+
+  function setMatchAnalysis(id, data) {
+    // id 可能来自路由参数（字符串 '19'）或数字（19），统一转字符串比较，
+    // 避免严格相等类型不匹配导致比对结果静默写不进去
+    if (currentProject.value?.id !== undefined && String(currentProject.value.id) === String(id)) {
+      currentProject.value = { ...currentProject.value, matchAnalysis: data }
     }
   }
 
@@ -253,6 +263,7 @@ export const useProjectStore = defineStore('project', () => {
     removeTenderDoc,
     fetchRequirements,
     updateRequirementStatus,
-    parseDocument
+    parseDocument,
+    setMatchAnalysis
   }
 })

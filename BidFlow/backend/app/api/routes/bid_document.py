@@ -24,6 +24,24 @@ def _download_headers(project_name: str, project_id: int, ext: str, media_type: 
     }
 
 
+def _ensure_submittable(db: Session, project_id: int) -> None:
+    """导出投标文件前的就绪度门槛校验（与 readiness_service.can_submit 同口径）：
+    未处理高风险清零 且 综合就绪度 >= 95 才允许导出标书 / 打包投递包。
+    不满足时抛 409，前端据此提示并阻止下载。
+    """
+    from app.core.exceptions import ConflictException
+    from app.services.readiness_service import readiness_service
+
+    r = readiness_service.calculate(project_id, db)
+    reasons = []
+    if r.high_risk_pending > 0:
+        reasons.append(f"仍有 {r.high_risk_pending} 个高风险项未处理")
+    if r.overall < 95:
+        reasons.append(f"响应就绪度 {r.overall}%（需达到 95%）")
+    if reasons:
+        raise ConflictException(message="当前不满足标书导出条件：" + "；".join(reasons))
+
+
 @router.get("/projects/{project_id}/bid-document/markdown")
 def export_bid_document_markdown(
     project_id: int,
@@ -33,6 +51,7 @@ def export_bid_document_markdown(
 ):
     """导出投标响应文件（Markdown）"""
     from fastapi.responses import StreamingResponse
+    _ensure_submittable(db, project_id)
     md_content = bid_document_service.build_markdown(db, project_id, project.name)
 
     def iter_content():
@@ -54,6 +73,7 @@ def export_bid_document_pdf(
     """导出投标响应文件（PDF，reportlab 中文渲染）"""
     from fastapi.responses import StreamingResponse
     import io
+    _ensure_submittable(db, project_id)
     pdf_bytes = bid_document_service.build_pdf_bytes(db, project_id, project.name)
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
@@ -173,6 +193,9 @@ def export_bid_package(
 
     from fastapi.responses import StreamingResponse
     from urllib.parse import quote
+
+    # 就绪度门槛：无未处理高风险 且 综合就绪度 >= 95 才允许打包（防绕过，后端强制）
+    _ensure_submittable(db, project_id)
 
     md_bid = bid_document_service.build_markdown(db, project_id, project.name)
     pdf_bid = bid_document_service.build_pdf_bytes(db, project_id, project.name)

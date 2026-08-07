@@ -92,8 +92,22 @@ def create_project(
         description=request.description,
         status="准备中",
     )
-    db.add(project)
-    db.commit()
+
+    # 生成项目编号（BF-2026-U3-001）：并发下唯一索引冲突则重试
+    from app.services.project_number_service import generate_tender_no
+    from sqlalchemy.exc import IntegrityError
+
+    for attempt in range(3):
+        project.tender_no = generate_tender_no(db, current_user.id)
+        db.add(project)
+        try:
+            db.commit()
+            break
+        except IntegrityError:
+            db.rollback()
+            if attempt == 2:
+                raise
+            # 唯一冲突 → 重新计算流水号再试
     db.refresh(project)
 
     return ApiResponse(data=project)

@@ -125,9 +125,6 @@
                     <div class="ai-suggestion">
                       <span class="detail-label">AI 修复建议</span>
                       <p class="detail-value">{{ risk.suggestion }}</p>
-                      <el-button size="small" type="primary" class="suggestion-btn" @click="emit('apply-suggestion', risk)">
-                        应用建议
-                      </el-button>
                     </div>
                   </div>
                 </div>
@@ -148,8 +145,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['recheck', 'export', 'apply-suggestion'])
-
+// 纯展示组件：不向上抛操作事件（"生成补救计划"由 RiskSummary 头部统一提供）
 const expandedRisk = ref(null)
 
 // 计算合规分数（三维加权 overall，与 readiness_service 一致）
@@ -213,6 +209,7 @@ const RULE_CODE_LABELS = {
   'P0_SOURCE_MISSING': '资料缺失',
   'RESPONSE_CONTENT_EMPTY': '内容为空',
   'RESPONSE_SOURCE_MISSING': '来源缺失',
+  'RESPONSE_SOURCE_STALE': '引用失效',  // L14：响应有引用但最新比对已检索不到（资料可能删除/过期）
   'MANUAL_MATERIAL_REQUIRED': '需人工补充',
   'SEMANTIC_': '语义风险'
 }
@@ -704,10 +701,6 @@ function toggleRisk(severity, index) {
   border: 1px solid rgba(26, 115, 232, 0.1);
   border-radius: 12px;
   position: relative;
-}
-
-.suggestion-btn {
-  margin-top: 12px;
 }
 
 /* Utility classes */

@@ -34,13 +34,6 @@ chroma/
 .idea/
 *.swp
 *.swo
-.workbuddy/
-
-# 前端依赖
-node_modules/
-
-# 诊断脚本（临时）
-diag_requirements.py
 
 # 操作系统
 .DS_Store
@@ -53,3 +46,15 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# IDE 记忆
+.workbuddy/
+
+# 前端依赖
+node_modules/
+
+# 生成资料
+generated_materials/
+
+# 诊断脚本（临时）
+diag_requirements.py

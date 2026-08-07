@@ -126,3 +126,121 @@ def build_semantic_compliance_messages(
             ),
         },
     ]
+
+
+def build_reflexion_evaluate_messages(
+    requirement_content: str,
+    response_content: str,
+    sources: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """构建 Reflexion 质量评估的 Prompt messages。
+
+    让 LLM 判断"响应是否充分满足招标要求"，输出结构化 JSON：
+    {"passed": true|false, "feedback": "改进方向", "missing_points": ["遗漏点"]}
+
+    评估标准刻意偏宽（只拦实质不达标），避免过度重写增加成本：
+    - 响应是否回应了招标要求的核心要点
+    - 关键承诺/资质/数值是否能在引用资料中找到支撑（而非编造）
+    - 是否明显答非所问或遗漏 P0/P1 关键条款
+    """
+    evidence = "\n".join(
+        f"- {s.get('filename', '未知文件')}（{s.get('source_ref', '未知位置')}）：{str(s.get('content', ''))[:200]}"
+        for s in (sources or [])[:8]
+    )
+    return [
+        {
+            "role": "system",
+            "content": (
+                "你是投标响应质量评估员。判断一份响应草稿是否充分满足对应的招标要求。\n"
+                "判定标准（偏宽松，只拦实质不达标）：\n"
+                "1. 响应是否覆盖招标要求的核心要点（尤其 P0 资格/资质类）；\n"
+                "2. 响应中的承诺、资质、数值是否能在引用资料中找到支撑；\n"
+                "3. 是否明显答非所问、空白或关键条款整条遗漏。\n"
+                "只要实质达标就返回 passed=true；只有明显缺失、答非所问或关键信息无支撑时才返回 passed=false。\n"
+                "只输出 JSON，结构为：{\"passed\": true|false, \"feedback\": \"简短改进方向（不超过 80 字）\", \"missing_points\": [\"具体遗漏点\"]}。"
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"招标要求：\n{requirement_content}\n\n"
+                f"投标响应草稿：\n{response_content}\n\n"
+                f"可引用资料：\n{evidence}\n\n"
+                '请输出评估 JSON。'
+            ),
+        },
+    ]
+
+
+def build_reflexion_refine_messages(
+    requirement_content: str,
+    draft_content: str,
+    sources: list[dict[str, Any]],
+    feedback: str,
+    missing_points: list[str],
+) -> list[dict[str, str]]:
+    """构建 Reflexion 重写 Prompt：基于评估反馈重写响应草稿。"""
+    evidence = "\n".join(
+        f"- {s.get('filename', '未知文件')}（{s.get('source_ref', '未知位置')}）：{str(s.get('content', ''))[:300]}"
+        for s in (sources or [])[:8]
+    )
+    missing = "\n".join(f"- {p}" for p in (missing_points or [])) or "（无具体遗漏点，按反馈整体优化）"
+    return [
+        {
+            "role": "system",
+            "content": (
+                "你是企业投标响应助手。你已生成过一版响应草稿，但质量评估认为它不达标。"
+                "请根据评估反馈重写响应：补充遗漏的关键点、修正无支撑的内容，"
+                "仍只能依据提供的企业资料作答，不得编造企业资质、案例、金额或承诺。"
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"招标要求：\n{requirement_content}\n\n"
+                f"原草稿：\n{draft_content}\n\n"
+                f"可引用资料：\n{evidence}\n\n"
+                f"评估反馈：{feedback}\n"
+                f"遗漏点：\n{missing}\n\n"
+                "请输出重写后的完整响应草稿。"
+            ),
+        },
+    ]
+
+
+def build_project_meta_judge_messages(
+    lines: list[str],
+    section: str = "",
+) -> list[dict[str, str]]:
+    """构建「项目元数据 vs 需求条款」LLM 判定 Prompt。
+
+    用于方案乙兜底层：正则快筛无法确定的行（弱命中）交给 LLM 判定。
+
+    Args:
+        lines: 待判定的行（弱命中行，含序号前缀）
+        section: 所属章节标题（上下文辅助）
+
+    Returns:
+        OpenAI 兼容 messages
+    """
+    numbered = "\n".join(f"{i}. {t}" for i, t in enumerate(lines))
+    ctx = f"（所属章节：{section}）\n" if section else ""
+    return [
+        {
+            "role": "system",
+            "content": (
+                "你是招标文件结构解析器。判断每一行属于「项目元数据」还是「需求条款」。\n"
+                "【项目元数据】描述项目本身的信息：项目名称、项目/招标/采购编号、采购人/招标人/招标单位、"
+                "预算金额、投标截止/开标时间等。特征是给出一个值，不构成对投标人的要求。\n"
+                "【需求条款】对投标人的约束或要求：资质资格、技术参数、商务条款、交付、报价规则、"
+                "评分标准等。特征是含有要求性表述（必须/应/不得/提供/具备…）或描述投标人义务。\n"
+                "注意区分：'投标截止：2026-09-15' 是元数据；'投标截止时间不得晚于开标前15日' 是需求条款。\n"
+                "只输出 JSON：{\"results\": [{\"index\": 0, \"is_meta\": true, \"field\": \"tender_ref_no|tenderer|budget|deadline|name|null\", \"value\": \"提取的值\", \"confidence\": 0.9}]}，"
+                "confidence 为 0~1，不确定时给低分。"
+            ),
+        },
+        {
+            "role": "user",
+            "content": f"{ctx}待判定行：\n{numbered}\n\n请输出判定 JSON。",
+        },
+    ]

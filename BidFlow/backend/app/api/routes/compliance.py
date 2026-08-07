@@ -40,20 +40,40 @@ def run_compliance_check(
 
     # 构建快照（L1：source_refs 解析统一走公共函数）
     from app.services.text_utils import parse_source_refs
+    from app.models.match_analysis import MatchAnalysisRun, MatchAnalysisDetail
+
+    # L14：预取最新一次比对分析的未匹配集合（has_match=false），
+    # 用于快照 match_unmatched 字段，规则引擎据此判定「引用资料可能失效」。
+    latest_run = (
+        db.query(MatchAnalysisRun)
+        .filter(MatchAnalysisRun.project_id == project_id)
+        .order_by(MatchAnalysisRun.created_at.desc())
+        .first()
+    )
+    unmatched_req_ids: set[int] = set()
+    if latest_run:
+        for d in db.query(MatchAnalysisDetail).filter(
+            MatchAnalysisDetail.run_id == latest_run.id,
+            MatchAnalysisDetail.has_match.is_(False),
+        ).all():
+            unmatched_req_ids.add(d.requirement_id)
 
     snapshots: list[RequirementSnapshot] = []
     for req in requirements:
         resp_content = ""
         source_refs: list = []
         resp_status = None
-        responses = getattr(req, "responses", None) or []
-        for r in responses:
-            if not resp_content:
-                resp_content = r.edited_content or r.ai_content or ""
-            if not source_refs and getattr(r, "source_refs", None):
-                source_refs = parse_source_refs(r.source_refs)
-            if resp_status is None and (r.edited_content or r.ai_content):
-                resp_status = r.status
+        # L13：只取「最新一条」响应（id 降序）——与 requirements.py:98 / readiness_service / 比对逻辑口径一致。
+        # 原实现 for r in responses（ORM 默认 id 升序）取到第一条：历史遗留多条响应时（旧版每次生成都新建），
+        # 会取到旧的 pending_review/草稿状态 → 对已批准的 P0 误报「P0 响应项尚未完成」（与前端「已批准」矛盾）。
+        responses = sorted(getattr(req, "responses", None) or [], key=lambda r: (r.id or 0), reverse=True)
+        if responses:
+            latest = responses[0]
+            resp_content = latest.edited_content or latest.ai_content or ""
+            if getattr(latest, "source_refs", None):
+                source_refs = parse_source_refs(latest.source_refs)
+            if resp_content:
+                resp_status = latest.status
         snapshot_status = resp_status or req.status or "未处理"
         # 双重保险：needs_manual 状态下 source_refs 必有历史残留，强制清空
         # （generate_response_draft 已写入时清空，但旧数据可能仍残留），
@@ -67,6 +87,7 @@ def run_compliance_check(
             response_content=resp_content,
             source_refs=source_refs,
             status=snapshot_status,
+            match_unmatched=req.id in unmatched_req_ids,
         ))
 
     # 执行核查（规则引擎）
@@ -179,9 +200,10 @@ def get_compliance_report(
         else:
             issue.requirement_content = None
 
-    high_risks = [i for i in issues if i.level == "高"]
-    medium_risks = [i for i in issues if i.level == "中"]
-    low_risks = [i for i in issues if i.level == "低"]
+    # P0-2：风险列表与卡片数字口径统一——仅展示未处理项（risk_count 只统计"未处理"高/中）
+    high_risks = [i for i in issues if i.level == "高" and i.status == "未处理"]
+    medium_risks = [i for i in issues if i.level == "中" and i.status == "未处理"]
+    low_risks = [i for i in issues if i.level == "低" and i.status == "未处理"]
 
     # === 4 个卡片数字统一到「需求维度」（每个需求只属于 1 个状态，互斥自洽）===
     # 解决之前「已通过 19」（已生成响应数）+「核查风险 11/14」（issue 数）+「待人工 0」（硬编码）

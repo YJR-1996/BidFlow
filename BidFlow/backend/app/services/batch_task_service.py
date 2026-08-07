@@ -151,6 +151,19 @@ class BatchTaskService:
                 # 每条立即 commit，进度可见、断点不丢
                 session.commit()
                 self._record_item(task_id, item_result)
+
+            # 收尾：轻量重建风险清单（规则引擎，秒级；保留 semantic/已处理 issue）。
+            # 让「remediate 触发的批量重生成」与风险报告闭环——重生成完成后风险项随新响应重建，
+            # 无需用户再手动点「重新核查」。失败仅告警，不阻断任务状态。
+            try:
+                from app.services.compliance_recheck import recheck_rule_issues
+                recheck_result = recheck_rule_issues(project_id, session)
+                self._record_compliance_recheck(task_id, recheck_result)
+            except Exception as e:
+                logger.warning(
+                    "[batch] compliance recheck failed: task_id=%s, project=%d, err=%s",
+                    task_id, project_id, e,
+                )
         except Exception as e:
             logger.exception("[batch] task crashed: task_id=%s", task_id)
             session.rollback()
@@ -236,6 +249,50 @@ class BatchTaskService:
                 ai_content = "待人工补充：生成过程中发生异常，请手动填写。"
                 status = "needs_manual"
 
+        # ---- Reflexion 质量闭环：生成 → LLM 评估 → 不达标带反馈重写（最多 N 轮）----
+        if (
+            settings.REFLEXION_ENABLED
+            and status == "pending_review"          # 仅对已成功生成的响应做质量门
+            and ai_content
+        ):
+            from app.services.reflexion_evaluator import reflexion_evaluator
+
+            requirement_content = req.content or ""
+            for round_idx in range(1, settings.REFLEXION_MAX_ROUNDS):
+                verdict = reflexion_evaluator.evaluate(
+                    requirement_content=requirement_content,
+                    response_content=ai_content,
+                    sources=source_dicts,
+                )
+                if verdict.passed:
+                    break
+                # 不达标：重写轮扩大检索（top_k 5 → RETRY_TOP_K），给重写更多素材
+                logger.info(
+                    "[batch][reflexion] round=%d req_id=%s not passed, refining... feedback=%s",
+                    round_idx, req.id, verdict.feedback[:80],
+                )
+                try:
+                    if round_idx == 1 and settings.REFLEXION_RETRY_TOP_K > 5:
+                        sources = retrieval_service.search(
+                            query=requirement_content,
+                            project_id=project_id,
+                            top_k=settings.REFLEXION_RETRY_TOP_K,
+                        )
+                        source_dicts = list(sources) if sources else source_dicts
+                    refined = reflexion_evaluator.refine(
+                        requirement_content=requirement_content,
+                        draft_content=ai_content,
+                        sources=source_dicts,
+                        feedback=verdict.feedback,
+                        missing_points=verdict.missing_points,
+                    )
+                    if refined:
+                        ai_content = refined
+                        source_refs_str = json.dumps(source_dicts, ensure_ascii=False)
+                except Exception as e:
+                    logger.warning("[batch][reflexion] refine round=%d failed: %s", round_idx, e)
+                    break
+
         # Upsert：如已有响应记录（无内容的占位符），则更新；否则新建
         if existing:
             existing.ai_content = ai_content
@@ -281,6 +338,14 @@ class BatchTaskService:
                 task["succeeded"] += 1
             else:
                 task["failed"] += 1
+
+    def _record_compliance_recheck(self, task_id: str, result: dict) -> None:
+        """把收尾的轻量合规核查结果写回任务快照，前端轮询 batch-status 可感知。"""
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if not task:
+                return
+            task["compliance_recheck"] = result
 
     def _mark_completed(self, task_id: str) -> None:
         with self._lock:

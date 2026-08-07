@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     # JWT
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    # token 有效期 8 小时（覆盖一工作日，避免长时间编辑被踢）；.env 可覆盖
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 
     # Milvus
     MILVUS_HOST: str = "localhost"
@@ -55,6 +56,11 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: set = {"pdf", "docx", "txt"}
     MAX_FILE_SIZE: int = 25 * 1024 * 1024  # 25MB
     MAX_UPLOAD_SIZE: int = 25 * 1024 * 1024  # 25MB (兼容 file_storage.py 使用)
+
+    # Reflexion 质量闭环（响应生成后 LLM 评估，不达标带反馈重写）
+    REFLEXION_ENABLED: bool = True
+    REFLEXION_MAX_ROUNDS: int = 2        # 最多几轮（1 = 只生成不重写；2 = 生成+1次重写）
+    REFLEXION_RETRY_TOP_K: int = 8       # 重写轮检索扩到 top_k（首轮用 5）
 
     # 目录
     BASE_DIR: Path = _PROJECT_ROOT

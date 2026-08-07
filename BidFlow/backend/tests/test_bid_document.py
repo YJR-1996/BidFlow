@@ -1,4 +1,4 @@
-"""标书导出测试：服务层（Markdown/PDF 生成）+ 端点权限"""
+"""标书导出测试：服务层（Markdown/PDF 生成）+ 就绪度门槛 + 端点权限"""
 import io
 
 import pytest
@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.bid_project import BidProject
 from app.models.requirement import Requirement
 from app.models.response import Response as BidResponse
+from app.models.match_analysis import MatchAnalysisRun, MatchAnalysisDetail
 from app.services.bid_document_service import bid_document_service
 
 
@@ -66,9 +67,73 @@ class TestBidDocumentService:
         assert by_id[1].response_content == "我方持有有效营业执照。"
 
 
+class TestExportGate:
+    """就绪度门槛（无未处理高风险 且 overall >= 95）——服务层真实数据验证"""
+
+    def test_blocks_when_not_ready(self, bid_db):
+        """项目 1：1 条响应、1 条无响应、无 match 记录 → 不满足门槛"""
+        from app.api.routes.bid_document import _ensure_submittable
+        from app.core.exceptions import ConflictException
+        with pytest.raises(ConflictException) as exc_info:
+            _ensure_submittable(bid_db, 1)
+        assert "95" in str(exc_info.value.message)
+
+    def test_passes_when_ready(self, bid_db):
+        """项目 2：全需求有响应 + 比对分析全部 matched + 无未处理高风险 → 放行"""
+        from app.api.routes.bid_document import _ensure_submittable
+        bid_db.add(BidProject(id=2, name="就绪项目", owner_id="u1"))
+        bid_db.add(Requirement(id=3, project_id=2, content="提供营业执照", category="资格", priority="P0", status="已完成"))
+        bid_db.add(BidResponse(requirement_id=3, ai_content="草稿", edited_content="我方持证。", status="approved"))
+        run = MatchAnalysisRun(id=1, project_id=2, total=1, matched=1, unmatched=0, match_rate=100.0)
+        bid_db.add(run)
+        bid_db.add(MatchAnalysisDetail(run_id=1, requirement_id=3, has_match=True, match_count=1, match_score=0.95))
+        bid_db.commit()
+
+        _ensure_submittable(bid_db, 2)  # 不抛异常即通过
+
+    def test_blocks_when_high_risk_pending(self, bid_db):
+        """存在未处理高风险 issue → 即使就绪度高也拦截"""
+        from app.api.routes.bid_document import _ensure_submittable
+        from app.core.exceptions import ConflictException
+        from app.models.compliance_issue import ComplianceIssue
+        # 项目 2 达标数据 + 一个未处理高风险
+        bid_db.add(BidProject(id=2, name="就绪项目", owner_id="u1"))
+        bid_db.add(Requirement(id=3, project_id=2, content="提供营业执照", category="资格", priority="P0", status="已完成"))
+        bid_db.add(BidResponse(requirement_id=3, ai_content="草稿", edited_content="我方持证。", status="approved"))
+        run = MatchAnalysisRun(id=1, project_id=2, total=1, matched=1, unmatched=0, match_rate=100.0)
+        bid_db.add(run)
+        bid_db.add(MatchAnalysisDetail(run_id=1, requirement_id=3, has_match=True, match_count=1, match_score=0.95))
+        bid_db.add(ComplianceIssue(project_id=2, requirement_id=3, level="高", status="未处理", rule_code="X", description="d"))
+        bid_db.commit()
+
+        with pytest.raises(ConflictException) as exc_info:
+            _ensure_submittable(bid_db, 2)
+        assert "高风险" in str(exc_info.value.message)
+
+
 def _setup_project(client, headers):
     r = client.post("/api/projects", json={"name": "导出权限项目"}, headers=headers)
     return r.json()["data"]["id"]
+
+
+def _patch_readiness_ready(monkeypatch, can_submit=True, overall=100.0, high_risk_pending=0):
+    """把 readiness_service 单例的 calculate 替换为达标/不达标的假实现（路由测试隔离门槛判定）"""
+    from app.services.readiness_service import ReadinessResult, readiness_service
+
+    def fake_calculate(project_id, db):
+        return ReadinessResult(
+            total=1,
+            has_response=1,
+            has_source=1,
+            high_risk_pending=high_risk_pending,
+            overall=overall,
+            base_rate=100.0,
+            quality_rate=100.0,
+            compliance_rate=100.0,
+            can_submit=can_submit,
+        )
+
+    monkeypatch.setattr(readiness_service, "calculate", fake_calculate)
 
 
 class TestBidDocumentRoute:
@@ -84,24 +149,34 @@ class TestBidDocumentRoute:
         r = client.get(f"/api/projects/{pid}/bid-document/markdown", headers=other)
         assert r.status_code in (403, 404)
 
-    def test_markdown_returns_stream(self, client, auth_headers):
+    def test_markdown_returns_stream(self, client, auth_headers, monkeypatch):
+        """就绪度达标 → 正常返回流"""
+        _patch_readiness_ready(monkeypatch)
         pid = _setup_project(client, auth_headers)
         r = client.get(f"/api/projects/{pid}/bid-document/markdown", headers=auth_headers)
         assert r.status_code == 200
         assert r.headers.get("content-type", "").startswith(("text/", "application/"))
         assert "attachment" in r.headers.get("content-disposition", "")
 
-    def test_pdf_returns_stream(self, client, auth_headers):
+    def test_markdown_blocked_when_not_ready(self, client, auth_headers, monkeypatch):
+        """就绪度不达标（真实 readiness 计算）→ 409 阻断导出"""
+        pid = _setup_project(client, auth_headers)  # 空项目：无需求 → overall=0
+        r = client.get(f"/api/projects/{pid}/bid-document/markdown", headers=auth_headers)
+        assert r.status_code == 409
+        assert "95" in r.json()["detail"]["message"]
+
+    def test_pdf_returns_stream(self, client, auth_headers, monkeypatch):
+        _patch_readiness_ready(monkeypatch)
         pid = _setup_project(client, auth_headers)
         r = client.get(f"/api/projects/{pid}/bid-document/pdf", headers=auth_headers)
         assert r.status_code == 200
         assert r.content[:5] == b"%PDF-"
 
-    def test_bid_package_returns_zip(self, client, auth_headers):
-        """打包投递包：zip 包含标书 md/pdf + 合规报告 md/pdf + README"""
-        import io
+    def test_bid_package_returns_zip(self, client, auth_headers, monkeypatch):
+        """打包投递包：就绪度达标 → zip 包含标书 md/pdf + 合规报告 md/pdf + README"""
         import zipfile
 
+        _patch_readiness_ready(monkeypatch)
         pid = _setup_project(client, auth_headers)
         r = client.get(f"/api/projects/{pid}/bid-package", headers=auth_headers)
         assert r.status_code == 200
@@ -119,6 +194,13 @@ class TestBidDocumentRoute:
         assert len(zf.read("投标响应文件.md")) > 100
         assert zf.read("投标响应文件.pdf")[:5] == b"%PDF-"
 
+    def test_bid_package_blocked_when_not_ready(self, client, auth_headers):
+        """就绪度不达标 → 409 阻断打包（空项目场景）"""
+        pid = _setup_project(client, auth_headers)
+        r = client.get(f"/api/projects/{pid}/bid-package", headers=auth_headers)
+        assert r.status_code == 409
+        assert "95" in r.json()["detail"]["message"]
+
     def test_bid_package_other_user_denied(self, client, auth_headers):
         """越权用户不能打包他人项目"""
         pid = _setup_project(client, auth_headers)
@@ -128,8 +210,9 @@ class TestBidDocumentRoute:
         r = client.get(f"/api/projects/{pid}/bid-package", headers=other)
         assert r.status_code in (403, 404)
 
-    def test_bid_package_marks_project_completed(self, client, auth_headers):
-        """打包投递包成功 → 项目自动流转为"已完成" """
+    def test_bid_package_marks_project_completed(self, client, auth_headers, monkeypatch):
+        """打包投递包成功（就绪度达标）→ 项目自动流转为"已完成" """
+        _patch_readiness_ready(monkeypatch)
         pid = _setup_project(client, auth_headers)
         r = client.get(f"/api/projects/{pid}/bid-package", headers=auth_headers)
         assert r.status_code == 200

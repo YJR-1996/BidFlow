@@ -78,6 +78,11 @@ def _orchestrate_background(
         session.commit()
 
     except Exception as exc:
+        # 先回滚，确保上一事务（可能已失效）被清理，随后才能把状态标记为 failed
+        try:
+            session.rollback()
+        except Exception:
+            pass
         try:
             run = session.query(WorkflowRun).filter(WorkflowRun.id == run_id).first()
             if run:
@@ -87,6 +92,8 @@ def _orchestrate_background(
             pass
     finally:
         session.close()
+        # 释放本次后台任务自建的连接池，避免每次运行/恢复工作流都泄漏一池连接
+        local_engine.dispose()
 
 
 @router.post("/{project_id}/run-workflow", response_model=Dict[str, Any])

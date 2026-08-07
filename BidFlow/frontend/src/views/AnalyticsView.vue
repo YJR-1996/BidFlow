@@ -246,15 +246,23 @@
                 <span class="stat-label">待审核</span>
               </div>
             </div>
-            <!-- M37：未达标项清单（整改建议入口） -->
+            <!-- M37：未达标项清单（方案A：仅含未处理合规风险的需求，显示所属项目，可点击跳转） -->
             <div class="compliance-pending" v-if="pendingRequirements.length">
               <div class="pending-title">未达标项（前 {{ pendingRequirements.length }}）</div>
-              <div v-for="req in pendingRequirements" :key="req.id" class="pending-item">
+              <div
+                v-for="req in pendingRequirements"
+                :key="req.requirement_id"
+                class="pending-item"
+                @click="goToProject(req)"
+                title="点击跳转到该项目查看详情"
+              >
                 <span class="material-symbols-outlined pending-icon">error_outline</span>
                 <span class="pending-text">{{ req.content }}</span>
                 <el-tag size="small" :type="req.priority === 'P0' ? 'danger' : req.priority === 'P1' ? 'warning' : 'info'">
                   {{ req.priority }}
                 </el-tag>
+                <el-tag size="small" type="info" class="pending-project">{{ req.project_name }}</el-tag>
+                <span class="pending-link">查看项目 →</span>
               </div>
             </div>
           </div>
@@ -273,11 +281,20 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { getStats } from '@/api/stats'
 import { getProjects } from '@/api/projects'
 import { parseResponse } from '@/utils/api'
 import { parseServerDate } from '@/utils/date'
 import { ElMessage } from 'element-plus'
+
+const router = useRouter()
+
+// 未达标项 → 一键跳转到对应项目详情页（合规风险所在项目）
+function goToProject(req) {
+  if (!req?.project_id) return
+  router.push({ path: `/project/${req.project_id}` })
+}
 
 const selectedPeriod = ref('30d')
 const selectedProjectId = ref(null)  // null = 全部项目
@@ -1041,7 +1058,17 @@ onMounted(async () => {
   gap: 6px;
   font-size: 12px;
   color: var(--on-surface-variant);
-  padding: 4px 0;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pending-item:hover {
+  background: var(--surface-container-low);
+}
+.pending-item:hover .pending-link {
+  color: var(--primary);
+  opacity: 1;
 }
 .pending-item .pending-icon { font-size: 15px; color: var(--error, #ba1a1a); flex-shrink: 0; }
 .pending-item .pending-text {
@@ -1049,6 +1076,15 @@ onMounted(async () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.pending-project {
+  flex-shrink: 0;
+}
+.pending-link {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--primary);
+  opacity: 0.7;
 }
 
 /* Empty state */

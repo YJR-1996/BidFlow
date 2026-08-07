@@ -12,6 +12,10 @@ class RequirementSnapshot:
     response_content: str
     source_refs: list[Any]
     status: str
+    # L14：最新一次比对分析中此未匹配（match_analysis_details.has_match=false）。
+    # 用于判定「有 source_refs 但比对已无资料」→ 引用可能失效，单独风险。
+    # 默认 False 保持向后兼容（不带此字段的旧调用方行为不变）。
+    match_unmatched: bool = False
 
 
 @dataclass(frozen=True)
@@ -52,6 +56,18 @@ class ComplianceChecker:
                 issues.append(self._issue(item, "RESPONSE_SOURCE_MISSING", "medium", "响应内容缺少企业资料来源", "补充可追溯的企业资料引用。"))
             if item.status in ("needs_manual", "需要人工补充"):
                 issues.append(self._issue(item, "MANUAL_MATERIAL_REQUIRED", "medium", "资料不足，需要人工补充", "上传相关资质、案例或技术资料。"))
+            # L14：响应已有 source_refs 但当前比对分析显示未匹配（has_match=false），
+            # 意味着引用指向的资料可能已删除/不再可检索 → 引用失效风险。
+            # 仅在响应看起来「已通过」时触发：pending_review/needs_manual 会被前面的 P0_RESPONSE_MISSING / MANUAL 覆盖。
+            # level 按需求优先级动态：P0 → high（资格类否决项被无效引用等同被否决），其他 → medium。
+            elif (
+                item.match_unmatched
+                and item.source_refs
+                and item.status in self.COMPLETED_STATUSES
+            ):
+                stale_level = "high" if item.priority == "P0" else "medium"
+                issues.append(self._issue(item, "RESPONSE_SOURCE_STALE", stale_level,
+                    "响应引用资料可能失效", "企业资料库中未检索到此引用的资料，建议上传新材料后重新生成。"))
         return self._deduplicate(issues)
 
     @staticmethod

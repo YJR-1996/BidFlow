@@ -126,6 +126,67 @@ def db_add_response(db, requirement_id, content="响应", source_refs=None):
 
 
 # ---------------------------------------------------------------------------
+# ParseAgent：状态管理（成功 success / 失败 failed + error / 不无限重试）
+# ---------------------------------------------------------------------------
+class TestParseAgent:
+    def _add_doc(self, db, doc_id, status="pending", file_type="txt"):
+        from app.models.tender_document import TenderDocument
+        db.add(TenderDocument(
+            id=doc_id, project_id=1, filename=f"doc{doc_id}.txt",
+            file_path=f"/tmp/doc{doc_id}.txt", file_type=file_type,
+            status=status,
+        ))
+        db.commit()
+
+    def test_success_marks_document_success(self, agent_db):
+        """解析成功 → doc.status = success（与路由/前端契约一致）"""
+        from app.agents.parse_agent import ParseAgent
+        from app.models.tender_document import TenderDocument
+        self._add_doc(agent_db, 1)
+
+        agent = ParseAgent(ToolRegistry())
+        ctx = WorkflowContext(project_id=1, owner_id="u1")
+        with patch("app.services.document_parser.DocumentParserService.parse", return_value=[
+            {"text": "投标人须具备营业执照", "page": 1, "paragraph_index": 0, "source_ref": "段落 1"},
+        ]):
+            result = agent.run(ctx, agent_db)
+
+        doc = agent_db.query(TenderDocument).filter(TenderDocument.id == 1).first()
+        assert doc.status == "success"
+        assert doc.error_message is None
+        assert len(result.requirements) >= 1
+
+    def test_failure_marks_failed_with_error(self, agent_db):
+        """解析失败 → doc.status = failed + error_message（不再静默跳过）"""
+        from app.agents.parse_agent import ParseAgent
+        from app.models.tender_document import TenderDocument
+        self._add_doc(agent_db, 1)
+
+        agent = ParseAgent(ToolRegistry())
+        ctx = WorkflowContext(project_id=1, owner_id="u1")
+        with patch("app.services.document_parser.DocumentParserService.parse", side_effect=RuntimeError("boom")):
+            result = agent.run(ctx, agent_db)
+
+        doc = agent_db.query(TenderDocument).filter(TenderDocument.id == 1).first()
+        assert doc.status == "failed"
+        assert "boom" in (doc.error_message or "")
+
+    def test_failed_and_success_docs_not_reprocessed(self, agent_db):
+        """failed / success 状态不在白名单 → 不会被捞起重试（防无限重试）"""
+        from app.agents.parse_agent import ParseAgent
+        self._add_doc(agent_db, 1, status="failed")
+        self._add_doc(agent_db, 2, status="success")
+
+        agent = ParseAgent(ToolRegistry())
+        ctx = WorkflowContext(project_id=1, owner_id="u1")
+        with patch("app.services.document_parser.DocumentParserService.parse", side_effect=AssertionError("不应被调用")) as mock_parse:
+            result = agent.run(ctx, agent_db)
+
+        mock_parse.assert_not_called()
+        assert result.requirements == []
+
+
+# ---------------------------------------------------------------------------
 # build_snapshots_from_requirements
 # ---------------------------------------------------------------------------
 class TestBuildSnapshots:
@@ -154,6 +215,38 @@ class TestBuildSnapshots:
     def test_empty_requirements_returns_empty(self, agent_db):
         from app.agents.compliance_agent import build_snapshots_from_requirements
         assert build_snapshots_from_requirements(agent_db, []) == []
+
+    def test_snapshots_parse_source_refs(self, agent_db):
+        """响应带 source_refs（JSON 字符串）→ 快照解析出真实引用（修复前恒为空）"""
+        from app.agents.compliance_agent import build_snapshots_from_requirements
+        _add_requirement(agent_db, 1, status="未处理", priority="P1")
+        db_add_response(
+            agent_db, requirement_id=1, content="响应内容",
+            source_refs='[{"content":"营业执照.pdf","filename":"a.pdf"}]',
+        )
+
+        requirements = [{"id": 1, "content": "需求", "priority": "P1", "status": "未处理"}]
+        snapshots = build_snapshots_from_requirements(agent_db, requirements)
+
+        assert len(snapshots[0].source_refs) == 1
+        assert snapshots[0].source_refs[0]["filename"] == "a.pdf"
+
+    def test_snapshots_clear_refs_on_needs_manual(self, agent_db):
+        """needs_manual 状态 + 历史残留 source_refs → 强制清空（与主通道 compliance.py 对齐）"""
+        from app.agents.compliance_agent import build_snapshots_from_requirements
+        from app.models.response import Response as BidResponse
+        _add_requirement(agent_db, 1, status="未处理", priority="P0")
+        db_add_response(agent_db, requirement_id=1, content="待人工补充资料",
+                        source_refs='[{"content":"x"}]')
+        resp = agent_db.query(BidResponse).filter(BidResponse.requirement_id == 1).first()
+        resp.status = "needs_manual"
+        agent_db.commit()
+
+        requirements = [{"id": 1, "content": "需求", "priority": "P0", "status": "未处理"}]
+        snapshots = build_snapshots_from_requirements(agent_db, requirements)
+
+        assert snapshots[0].source_refs == []
+        assert snapshots[0].status == "needs_manual"
 
 
 # ---------------------------------------------------------------------------

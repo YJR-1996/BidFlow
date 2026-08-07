@@ -1,8 +1,18 @@
 <!-- AiChatPanel.vue - 项目 AI 助手对话面板（悬浮按钮触发，抽屉式） -->
 <template>
   <div class="ai-chat">
-    <!-- 悬浮按钮 -->
-    <button class="ai-fab" :class="{ active: visible }" @click="visible = true" aria-label="打开 AI 助手">
+    <!-- 悬浮按钮（可拖拽：pointerdown 开始，位移 <5px 视为点击打开抽屉） -->
+    <button
+      class="ai-fab"
+      :class="{ active: visible, dragging: fabDragging }"
+      :style="fabStyle"
+      @pointerdown="onFabPointerDown"
+      @pointermove="onFabPointerMove"
+      @pointerup="onFabPointerUp"
+      @pointercancel="onFabPointerUp"
+      @keydown.enter="visible = true"
+      aria-label="打开 AI 助手"
+    >
       <span class="material-symbols-outlined">auto_awesome</span>
       <span class="fab-tooltip">AI 助手</span>
     </button>
@@ -69,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { chatProject } from '@/api/chat'
 import { parseResponse } from '@/utils/api'
@@ -83,6 +93,68 @@ const draft = ref('')
 const sending = ref(false)
 const messages = ref([])
 const msgListRef = ref(null)
+
+// ---- 悬浮按钮拖拽（避免与右下角"保存草案"等操作重叠）----
+const FAB_POS_KEY = 'bidflow_ai_fab_pos'
+const fabPos = ref(null) // {left, top} 用户拖拽后的位置；null = 默认右下角
+const fabDragging = ref(false)
+const dragStart = ref(null) // {x, y, left, top}
+let dragMoved = false // 是否发生了位移（区分点击/拖拽）
+
+const fabStyle = computed(() => {
+  if (fabPos.value) {
+    return { left: `${fabPos.value.left}px`, top: `${fabPos.value.top}px` }
+  }
+  return { right: '24px', bottom: '24px' }
+})
+
+function onFabPointerDown(e) {
+  if (e.button !== 0 && e.pointerType === 'mouse') return
+  const rect = e.currentTarget.getBoundingClientRect()
+  dragStart.value = { x: e.clientX, y: e.clientY, left: rect.left, top: rect.top }
+  dragMoved = false
+  fabDragging.value = true
+}
+
+function onFabPointerMove(e) {
+  if (!fabDragging.value || !dragStart.value) return
+  const dx = e.clientX - dragStart.value.x
+  const dy = e.clientY - dragStart.value.y
+  if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return // 尚未拖出点击阈值
+  dragMoved = true
+  const btnW = e.currentTarget.offsetWidth || 56
+  const btnH = e.currentTarget.offsetHeight || 56
+  const maxLeft = Math.max(8, window.innerWidth - btnW - 8)
+  const maxTop = Math.max(8, window.innerHeight - btnH - 8)
+  const left = Math.min(Math.max(8, dragStart.value.left + dx), maxLeft)
+  const top = Math.min(Math.max(8, dragStart.value.top + dy), maxTop)
+  fabPos.value = { left, top }
+}
+
+function onFabPointerUp() {
+  if (!fabDragging.value) return
+  fabDragging.value = false
+  dragStart.value = null
+  if (dragMoved) {
+    dragMoved = false
+    // 拖拽结束：记住位置，下次进入仍在此处
+    try {
+      if (fabPos.value) localStorage.setItem(FAB_POS_KEY, JSON.stringify(fabPos.value))
+    } catch { /* localStorage 不可用时忽略 */ }
+    return // 拖拽不算点击，不打开抽屉
+  }
+  visible.value = true // 纯点击 → 打开抽屉
+}
+
+onMounted(() => {
+  try {
+    const raw = localStorage.getItem(FAB_POS_KEY)
+    if (raw) {
+      const p = JSON.parse(raw)
+      if (typeof p?.left === 'number' && typeof p?.top === 'number') fabPos.value = p
+    }
+  } catch { /* 忽略损坏数据 */ }
+})
 
 const QUICK_QUESTIONS = [
   '项目整体进展如何？',
@@ -140,14 +212,15 @@ watch(visible, (v) => { if (v) scrollToBottom() })
 <style scoped>
 .ai-fab {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
   z-index: 3000;
   width: 56px;
   height: 56px;
   border-radius: 50%;
   border: none;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   background: linear-gradient(135deg, #6a5cff, #8b5cf6);
   color: #fff;
   display: flex;
@@ -159,6 +232,11 @@ watch(visible, (v) => { if (v) scrollToBottom() })
 .ai-fab:hover, .ai-fab.active {
   transform: scale(1.08) rotate(8deg);
   box-shadow: 0 12px 32px rgba(107, 92, 255, 0.5);
+}
+.ai-fab.dragging {
+  cursor: grabbing;
+  transform: scale(1.08);
+  box-shadow: 0 16px 40px rgba(107, 92, 255, 0.55);
 }
 .ai-fab .material-symbols-outlined { font-size: 26px; }
 .fab-tooltip {

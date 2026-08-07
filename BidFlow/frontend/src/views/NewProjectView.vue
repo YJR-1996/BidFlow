@@ -53,7 +53,7 @@
                 v-model="form.budget"
                 placeholder="请输入预计金额"
                 :min="0"
-                :precision="2"
+                :precision="0"
                 size="large"
                 controls-position="right"
                 style="width: 100%"

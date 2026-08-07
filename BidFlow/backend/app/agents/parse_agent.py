@@ -11,6 +11,11 @@ class ParseAgent(BaseAgent):
 
     name = "parse"
 
+    # 只处理「待解析 / 解析中」的文档：
+    # - success（历史 parsed 同理）已成功，跳过避免重复抽取
+    # - failed 已标记失败，跳过避免无限重试（需人工重置 pending 后才重试）
+    PENDING_STATUSES = ("pending", "processing")
+
     def run(self, ctx: WorkflowContext, db) -> WorkflowContext:
         from sqlalchemy.orm import joinedload
         from app.models.bid_project import BidProject
@@ -27,7 +32,7 @@ class ParseAgent(BaseAgent):
             db.query(TenderDocument)
             .filter(
                 TenderDocument.project_id == ctx.project_id,
-                TenderDocument.status != "parsed",
+                TenderDocument.status.in_(self.PENDING_STATUSES),
             )
             .all()
         )
@@ -44,8 +49,8 @@ class ParseAgent(BaseAgent):
                     tender_document_id=doc.id,
                     parsed_paragraphs=paragraphs,
                 )
-                # 3. 更新文档状态
-                doc.status = "parsed"
+                # 3. 更新文档状态（与路由/前端契约一致：success）
+                doc.status = "success"
                 db.add(doc)
                 all_reqs.extend(reqs)
                 logger.info(
@@ -53,6 +58,11 @@ class ParseAgent(BaseAgent):
                     doc.id, len(reqs),
                 )
             except Exception as exc:
+                # 可见失败：标记 failed + 记录错误，便于定位；不静默跳过
+                # （failed 不在 PENDING_STATUSES，不会下次自动重试，防无限重试）
+                doc.status = "failed"
+                doc.error_message = str(exc)[:500]
+                db.add(doc)
                 logger.exception("[ParseAgent] document_id=%s failed: %s", doc.id, exc)
                 continue
 

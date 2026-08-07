@@ -209,21 +209,37 @@ def get_statistics(
     }
 
     # ============ 7. 合规健康度（按当前视图实时计算——M37 核心改造） ============
-    # 按规则的未达标项清单（便于展示整改建议）：当前视图下 status != "已完成" 的需求 top N
+    # 未达标项（方案 A）：当前视图下「存在未处理合规风险」的需求——与风险数字同源，
+    # 不再列"未完成需求"。每条带所属项目信息（project_id/project_name），前端可点击跳转。
     pending_q = (
-        db.query(Requirement)
+        db.query(Requirement, BidProject)
         .join(BidProject, BidProject.id == Requirement.project_id)
+        .join(ComplianceIssue, ComplianceIssue.requirement_id == Requirement.id)
         .filter(
             BidProject.owner_id == current_user.id,
-            Requirement.status != "已完成",
+            ComplianceIssue.status == "未处理",
         )
-        .limit(100)
     )
-    pending_items = [
-        {"id": req.id, "content": (req.content or "")[:60], "priority": req.priority}
-        for req in pending_q.all()
-        if scoped_project is None or req.project_id == scoped_project.id
-    ][:10]
+    if scoped_project:
+        # 单项目视图：SQL 层直接过滤（避免先 limit 再内存过滤导致当前项目被挤掉）
+        pending_q = pending_q.filter(Requirement.project_id == scoped_project.id)
+    pending_q = pending_q.limit(200)
+
+    pending_items = []
+    seen_req_ids: set[int] = set()
+    for req, proj in pending_q.all():
+        if req.id in seen_req_ids:
+            continue  # 同一需求多个未处理 issue → 去重只留一条
+        seen_req_ids.add(req.id)
+        pending_items.append({
+            "requirement_id": req.id,
+            "content": (req.content or "")[:60],
+            "priority": req.priority,
+            "project_id": proj.id,
+            "project_name": proj.name,
+        })
+        if len(pending_items) >= 10:
+            break
 
     compliance = {
         "total_items": total_req_count,

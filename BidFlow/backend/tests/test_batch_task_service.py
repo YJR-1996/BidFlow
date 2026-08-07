@@ -273,10 +273,12 @@ class TestProcessOne:
         gen_service.generate.return_value = gen_result
 
         with patch("app.services.batch_task_service.json.dumps", return_value="[]") as mock_dumps:
-            result = svc._process_one(
-                session=session, gen_service=gen_service,
-                retrieval_service=retrieval_service, project_id=1, requirement_id=10,
-            )
+            # 关闭 Reflexion 闭环：本测试只验证「生成 + 写库」，避免评估器真调 LLM
+            with patch("app.services.batch_task_service.settings.REFLEXION_ENABLED", False):
+                result = svc._process_one(
+                    session=session, gen_service=gen_service,
+                    retrieval_service=retrieval_service, project_id=1, requirement_id=10,
+                )
 
         assert result["status"] == "pending_review"
         gen_service.generate.assert_called_once()
